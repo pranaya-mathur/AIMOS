@@ -1,5 +1,5 @@
 {
-  "agent_name": "growth_planner_agent",
+  "agent_name": "growth_planner",
   "output_key": "growth_recommendations",
   "schema": {
     "next_channel_focus": "string",

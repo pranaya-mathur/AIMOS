@@ -5,9 +5,9 @@
 
 | Step | What to run |
 |------|-------------|
-| **1 — Local stack** | `./setup.sh` or **`make up`** — copies `.env` from `.env.example` if missing, runs `scripts/validate_env.py`, builds and starts Docker Compose (Postgres + Redis + API + worker + beat), waits for `/health/ready`, runs **`scripts/db_init.py`** inside the API container (dev user `dev@aimos.local`). |
+| **1 — Local stack** | `./setup.sh` or **`make up`** — copies `.env` from `.env.example` if missing, runs `scripts/validate_env.py`, builds and starts Docker Compose (Postgres + Redis + API + worker + beat), waits for `/health/ready`, runs **`scripts/db_init.py`** inside the API container (dev user `aimos-dev@example.com`). |
 | **2 — Docs** | Open **http://localhost:8000/docs** — you should see: `AIMOS is ready → …` in the terminal when setup finishes. |
-| **3 — E2E campaign** | Set a real **`OPENAI_API_KEY`** in `.env`, restart workers (`docker compose restart worker`), then **`python3 scripts/test_full_campaign.py`** — creates a campaign, waits for the Celery job, checks **12-agent** `agent_outputs`. |
+| **3 — E2E campaign** | Set a real **`OPENAI_API_KEY`** in `.env`, restart workers (`docker compose restart worker`), then **`python3 scripts/test_full_campaign.py`** — creates a campaign, waits for the Celery job, checks **12-agent** `agent_outputs`. **Sample success output:** [`docs/E2E_TESTING.md`](docs/E2E_TESTING.md). |
 | **4 — AWS deploy** | Configure `infra/aws/terraform/terraform.tfvars`, then **`chmod +x scripts/deploy_aws.sh && ./scripts/deploy_aws.sh`** — Terraform apply → ECR push → ECS rolling restart. Outputs **ALB URL** for Bubble. |
 | **5 — Bubble** | **`docs/bubble/README.md`** + **`docs/bubble/WORKFLOWS.md`** — OpenAPI import, CORS, JWT, workflow templates. |
 
@@ -38,7 +38,7 @@ AI Marketing Operating System — **FastAPI** backend with JWT auth, Stripe bill
 | `scripts/` | **Dev/ops** — `setup.sh` / `validate_env.py` / `db_init.py` / `test_full_campaign.py` / `deploy_aws.sh` / `export_openapi.py`. |
 | `docs/bubble/` | **Bubble kit** — OpenAPI export, CORS/auth notes, workflow templates (`README.md`, `WORKFLOWS.md`). |
 | `infra/aws/terraform/` | **AWS (Terraform)** — VPC, RDS Postgres, ElastiCache Redis, ECR, ECS Fargate (api / worker / beat), ALB, Secrets Manager. See `infra/aws/terraform/README.md`. |
-| `docs/` | **Product & architecture** — BRD → implementation alignment, phases, costs: `PRODUCT_ARCHITECTURE.md`. |
+| `docs/` | **Product & architecture** — `PRODUCT_ARCHITECTURE.md`; **E2E** — `E2E_TESTING.md` (expected campaign test output). |
 | Root | `Dockerfile`, `docker-compose.yml`, `.env.example`. |
 
 Agent **code** stays thin (`services/agents/*.py`); **wording and schemas** live under `prompts/agents/`.

@@ -1,5 +1,5 @@
 {
-  "agent_name": "content_studio_agent",
+  "agent_name": "content_studio",
   "output_key": "content_assets",
   "schema": {
     "graphics_briefs": [

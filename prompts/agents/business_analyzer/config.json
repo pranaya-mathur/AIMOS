@@ -1,5 +1,5 @@
 {
-  "agent_name": "business_analyzer_agent",
+  "agent_name": "business_analyzer",
   "output_key": "business_analysis",
   "schema": {
     "industry_summary": "string",

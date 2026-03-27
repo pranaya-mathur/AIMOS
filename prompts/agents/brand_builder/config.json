@@ -1,5 +1,5 @@
 {
-  "agent_name": "brand_builder_agent",
+  "agent_name": "brand_builder",
   "output_key": "brand_kit",
   "schema": {
     "logo_direction": [

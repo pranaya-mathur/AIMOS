@@ -1,5 +1,5 @@
 {
-  "agent_name": "lead_capture_agent",
+  "agent_name": "lead_capture",
   "output_key": "lead_system",
   "schema": {
     "landing_page_outline": [

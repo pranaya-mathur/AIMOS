@@ -1,5 +1,5 @@
 {
-  "agent_name": "analytics_engine_agent",
+  "agent_name": "analytics_engine",
   "output_key": "analytics_pack",
   "schema": {
     "kpis": [

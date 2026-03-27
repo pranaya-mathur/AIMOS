@@ -30,7 +30,8 @@ from models import User
 from services.auth import hash_password
 
 
-DEV_EMAIL = "dev@aimos.local"
+# Must pass EmailStr validation (avoid .local — pydantic/email-validator often returns 422)
+DEV_EMAIL = "aimos-dev@example.com"
 DEV_PASSWORD = "devpass123"
 
 

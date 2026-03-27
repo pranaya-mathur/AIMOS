@@ -1,5 +1,5 @@
 {
-  "agent_name": "business_dashboard_agent",
+  "agent_name": "business_dashboard",
   "output_key": "dashboard_summary",
   "schema": {
     "summary_cards": [

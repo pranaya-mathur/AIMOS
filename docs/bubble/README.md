@@ -29,7 +29,7 @@ In `.env` (or AWS Secrets Manager in production):
 2. Store `access_token` in a Bubble custom state or secure field.
 3. API Connector **shared header:** `Authorization` = `Bearer <access_token>`.
 
-For automated tests, seed user `dev@aimos.local` is created by `./setup.sh` + `db_init` (password in `scripts/db_init.py`).
+For automated tests, seed user `aimos-dev@example.com` is created by `./setup.sh` + `db_init` (password in `scripts/db_init.py`).
 
 ## 4. Workflow templates (conceptual)
 

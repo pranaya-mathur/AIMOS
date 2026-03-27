@@ -23,6 +23,9 @@ services:
       timeout: 5s
       retries: 30
       start_period: 15s
+    volumes:
+      # Hot-reload prompt edits without rebuilding the image (remove for immutable prod deploys)
+      - ./prompts:/app/prompts
 
   worker:
     build: .
@@ -36,6 +39,8 @@ services:
         condition: service_started
       redis:
         condition: service_started
+    volumes:
+      - ./prompts:/app/prompts
 
   beat:
     build: .
@@ -49,6 +54,8 @@ services:
         condition: service_started
       redis:
         condition: service_started
+    volumes:
+      - ./prompts:/app/prompts
 
   redis:
     image: redis:7-alpine

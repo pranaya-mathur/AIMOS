@@ -1,5 +1,5 @@
 {
-  "agent_name": "customer_engagement_agent",
+  "agent_name": "customer_engagement",
   "output_key": "engagement_plan",
   "schema": {
     "email_sequences": [

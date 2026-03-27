@@ -1,5 +1,5 @@
 {
-  "agent_name": "optimization_engine_agent",
+  "agent_name": "optimization_engine",
   "output_key": "optimization_rules",
   "schema": {
     "pause_rules": [

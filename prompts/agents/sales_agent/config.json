@@ -1,5 +1,5 @@
 {
-  "agent_name": "sales_agent_agent",
+  "agent_name": "sales_agent",
   "output_key": "sales_playbook",
   "schema": {
     "qualification_questions": [

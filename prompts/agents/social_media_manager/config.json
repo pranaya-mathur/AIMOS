@@ -1,5 +1,5 @@
 {
-  "agent_name": "social_media_manager_agent",
+  "agent_name": "social_media_manager",
   "output_key": "social_calendar",
   "schema": {
     "channels": [

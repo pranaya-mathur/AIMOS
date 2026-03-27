@@ -48,12 +48,11 @@ def _load_json(path: Path) -> dict[str, Any]:
         return json.load(f)
 
 
-@lru_cache(maxsize=32)
 def get_agent_bundle(agent_id: str) -> dict[str, Any]:
     """
-    Load one agent's config + task template.
+    Load one agent's config + task template (not cached — edits apply without worker restart).
 
-    agent_id: directory name under prompts/agents/ (e.g. "business", "paid_media").
+    agent_id: directory name under prompts/agents/ (e.g. "business_analyzer").
     Returns keys: agent_name, output_key, schema, task_template
     """
     base = prompts_root() / "agents" / agent_id
