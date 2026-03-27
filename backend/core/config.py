@@ -1,14 +1,24 @@
 from functools import lru_cache
+from pathlib import Path
 from typing import Optional
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# backend/core/config.py → backend dir and repo root (same layout as Docker: .env at repo root)
+_BACKEND_DIR = Path(__file__).resolve().parent.parent
+_REPO_ROOT = _BACKEND_DIR.parent
+
 
 class Settings(BaseSettings):
     """Validated environment configuration (fail fast at startup)."""
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    # Load backend/.env first, then repo root .env (later wins — matches docker-compose `env_file: .env`)
+    model_config = SettingsConfigDict(
+        env_file=(str(_BACKEND_DIR / ".env"), str(_REPO_ROOT / ".env")),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     database_url: str
     redis_url: str

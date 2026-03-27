@@ -32,9 +32,9 @@ Agent **code** stays thin (`services/agents/*.py`); **wording and schemas** live
 
 ## Quick start (instructions)
 
-1. **Prerequisites:** [Docker](https://docs.docker.com/get-docker/) and Docker Compose.
+1. **Prerequisites:** [Docker](https://docs.docker.com/get-docker/) and Docker Compose. **Python 3.10** matches the `Dockerfile` (`.python-version`); use it for a local venv if you develop outside Docker.
 2. **Configure environment**
-   - Copy `.env.example` to `.env` in the project root.
+   - Copy `.env.example` to `.env` in the project root. Settings resolve `backend/.env` then **repo root `.env`** (later wins); running `uvicorn` from `backend/` still loads the root file.
    - Set at minimum: `DATABASE_URL`, `REDIS_URL`, `OPENAI_API_KEY`, `JWT_SECRET`.
    - For the default `docker-compose` Postgres, you can use:
      - `DATABASE_URL=postgresql://user:password@db:5432/aimos`
@@ -53,6 +53,8 @@ Agent **code** stays thin (`services/agents/*.py`); **wording and schemas** live
    - [http://localhost:8000/health/ready](http://localhost:8000/health/ready) — DB + Redis check
 
 5. **Local dev without JWT** (never in production): set `AUTH_DISABLED=1` in `.env` so `/campaign/*`, `/agents/*`, `/launch/*`, and `/creatives/*` skip token checks.
+
+**Local venv (optional, no Docker):** `python3.10 -m venv venv && source venv/bin/activate && pip install -r backend/requirements.txt`, then from `backend/`: `uvicorn main:app --reload --host 0.0.0.0 --port 8000` (with Postgres + Redis running and `.env` at repo root). Celery: `celery -A celery_app.celery worker` and `celery -A celery_app.celery beat` in separate shells from `backend/`.
 
 ---
 
