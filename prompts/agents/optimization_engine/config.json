@@ -1,0 +1,18 @@
+{
+  "agent_name": "optimization_engine_agent",
+  "output_key": "optimization_rules",
+  "schema": {
+    "pause_rules": [
+      "string"
+    ],
+    "scale_rules": [
+      "string"
+    ],
+    "experiment_backlog": [
+      "string"
+    ],
+    "budget_shifts": [
+      "string"
+    ]
+  }
+}

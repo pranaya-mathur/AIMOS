@@ -1,0 +1,17 @@
+
+fastapi
+uvicorn
+celery
+redis
+sqlalchemy
+psycopg2-binary
+langgraph
+openai
+httpx
+pydantic-settings
+PyJWT
+passlib[bcrypt]
+bcrypt
+python-multipart
+email-validator
+stripe

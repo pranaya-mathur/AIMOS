@@ -1,0 +1,19 @@
+{
+  "agent_name": "content_studio_agent",
+  "output_key": "content_assets",
+  "schema": {
+    "graphics_briefs": [
+      "string"
+    ],
+    "video_briefs": [
+      "string"
+    ],
+    "voice_briefs": [
+      "string"
+    ],
+    "variation_count": "string",
+    "production_notes": [
+      "string"
+    ]
+  }
+}

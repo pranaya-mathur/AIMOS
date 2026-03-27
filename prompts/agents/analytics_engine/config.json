@@ -1,0 +1,18 @@
+{
+  "agent_name": "analytics_engine_agent",
+  "output_key": "analytics_pack",
+  "schema": {
+    "kpis": [
+      "string"
+    ],
+    "dashboards": [
+      "string"
+    ],
+    "attribution_notes": [
+      "string"
+    ],
+    "reporting_cadence": [
+      "string"
+    ]
+  }
+}

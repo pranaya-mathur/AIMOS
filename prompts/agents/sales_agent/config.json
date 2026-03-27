@@ -1,0 +1,16 @@
+{
+  "agent_name": "sales_agent_agent",
+  "output_key": "sales_playbook",
+  "schema": {
+    "qualification_questions": [
+      "string"
+    ],
+    "objection_handling": [
+      "string"
+    ],
+    "booking_flow": "string",
+    "follow_up_scripts": [
+      "string"
+    ]
+  }
+}

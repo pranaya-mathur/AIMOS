@@ -1,0 +1,16 @@
+# Copy to terraform.tfvars (do not commit real secrets).
+
+aws_region  = "us-east-1"
+name_prefix = "aimos"
+
+openai_api_key = "sk-your-openai-key"
+jwt_secret     = "change-me-long-random-string"
+
+# Optional: override image (default = ECR repo :latest)
+# container_image = "123456789012.dkr.ecr.us-east-1.amazonaws.com/aimos/app:v1"
+
+# Optional extra env for all containers (plain text in task def)
+# additional_container_env = {
+#   CORS_ORIGINS = "https://yourapp.bubbleapps.io"
+#   PUBLIC_API_BASE_URL = "https://api.example.com"
+# }

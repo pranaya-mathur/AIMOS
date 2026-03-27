@@ -1,0 +1,19 @@
+{
+  "agent_name": "brand_builder_agent",
+  "output_key": "brand_kit",
+  "schema": {
+    "logo_direction": [
+      "string"
+    ],
+    "color_palette": [
+      "string"
+    ],
+    "brand_voice": "string",
+    "social_templates": [
+      "string"
+    ],
+    "tone_guidelines": [
+      "string"
+    ]
+  }
+}

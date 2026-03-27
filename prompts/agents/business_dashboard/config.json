@@ -1,0 +1,18 @@
+{
+  "agent_name": "business_dashboard_agent",
+  "output_key": "dashboard_summary",
+  "schema": {
+    "summary_cards": [
+      "string"
+    ],
+    "alerts": [
+      "string"
+    ],
+    "quick_actions": [
+      "string"
+    ],
+    "mobile_notes": [
+      "string"
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "agent_name": "customer_engagement_agent",
+  "output_key": "engagement_plan",
+  "schema": {
+    "email_sequences": [
+      "string"
+    ],
+    "sms_touches": [
+      "string"
+    ],
+    "whatsapp_touches": [
+      "string"
+    ],
+    "loyalty_ideas": [
+      "string"
+    ]
+  }
+}

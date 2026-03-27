@@ -1,0 +1,18 @@
+{
+  "agent_name": "social_media_manager_agent",
+  "output_key": "social_calendar",
+  "schema": {
+    "channels": [
+      "string"
+    ],
+    "posting_calendar": [
+      "string"
+    ],
+    "hashtag_sets": [
+      "string"
+    ],
+    "engagement_metrics": [
+      "string"
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "agent_name": "lead_capture_agent",
+  "output_key": "lead_system",
+  "schema": {
+    "landing_page_outline": [
+      "string"
+    ],
+    "form_fields": [
+      "string"
+    ],
+    "crm_fields": [
+      "string"
+    ],
+    "whatsapp_flow": [
+      "string"
+    ]
+  }
+}

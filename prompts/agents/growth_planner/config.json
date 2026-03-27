@@ -1,0 +1,12 @@
+{
+  "agent_name": "growth_planner_agent",
+  "output_key": "growth_recommendations",
+  "schema": {
+    "next_channel_focus": "string",
+    "next_content_type": "string",
+    "budget_recommendation": "string",
+    "next_90_day_actions": [
+      "string"
+    ]
+  }
+}

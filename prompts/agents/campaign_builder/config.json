@@ -1,0 +1,21 @@
+{
+  "agent_name": "campaign_builder_agent",
+  "output_key": "campaign_plan",
+  "schema": {
+    "objectives": [
+      "string"
+    ],
+    "targeting_hypotheses": [
+      "string"
+    ],
+    "placements": [
+      "string"
+    ],
+    "budget_split": [
+      "string"
+    ],
+    "launch_checklist": [
+      "string"
+    ]
+  }
+}

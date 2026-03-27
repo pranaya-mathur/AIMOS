@@ -1,0 +1,20 @@
+{
+  "agent_name": "business_analyzer_agent",
+  "output_key": "business_analysis",
+  "schema": {
+    "industry_summary": "string",
+    "competitor_notes": [
+      "string"
+    ],
+    "audience_hypotheses": [
+      "string"
+    ],
+    "recommended_platforms": [
+      "string"
+    ],
+    "suggested_monthly_budget": "string",
+    "risks": [
+      "string"
+    ]
+  }
+}
