@@ -1,6 +1,20 @@
 
 # AIMOS Enterprise (Real API Mode)
 
+## Plug & Play (start here)
+
+| Step | What to run |
+|------|-------------|
+| **1 — Local stack** | `./setup.sh` or **`make up`** — copies `.env` from `.env.example` if missing, runs `scripts/validate_env.py`, builds and starts Docker Compose (Postgres + Redis + API + worker + beat), waits for `/health/ready`, runs **`scripts/db_init.py`** inside the API container (dev user `dev@aimos.local`). |
+| **2 — Docs** | Open **http://localhost:8000/docs** — you should see: `AIMOS is ready → …` in the terminal when setup finishes. |
+| **3 — E2E campaign** | Set a real **`OPENAI_API_KEY`** in `.env`, restart workers (`docker compose restart worker`), then **`python3 scripts/test_full_campaign.py`** — creates a campaign, waits for the Celery job, checks **12-agent** `agent_outputs`. |
+| **4 — AWS deploy** | Configure `infra/aws/terraform/terraform.tfvars`, then **`chmod +x scripts/deploy_aws.sh && ./scripts/deploy_aws.sh`** — Terraform apply → ECR push → ECS rolling restart. Outputs **ALB URL** for Bubble. |
+| **5 — Bubble** | **`docs/bubble/README.md`** + **`docs/bubble/WORKFLOWS.md`** — OpenAPI import, CORS, JWT, workflow templates. |
+
+**Utilities:** `make validate` · `make seed` · `make e2e` · `make openapi` (writes `docs/bubble/openapi-snapshot.json` when the API is up).
+
+---
+
 AI Marketing Operating System — **FastAPI** backend with JWT auth, Stripe billing, a **12-agent LangGraph** pipeline (prompts in `prompts/`), Celery workers, optional **launch** integrations (Meta, WhatsApp, Google Ads stub), and media provider hooks (AdCreative / Pictory / ElevenLabs style).
 
 **BRD alignment:** The product vision (Bubble for UX, 12 AI modules end-to-end) is unchanged. This repo is the **production execution layer** — orchestration, jobs, retries, integrations, and scheduled work — so parallel creatives, multi-step flows, and optimization scale without overloading Bubble. Full narrative, phased roadmap, and cost bands: **[`docs/PRODUCT_ARCHITECTURE.md`](docs/PRODUCT_ARCHITECTURE.md)**.
@@ -21,7 +35,8 @@ AI Marketing Operating System — **FastAPI** backend with JWT auth, Stripe bill
 |------|---------|
 | `prompts/` | **Prompt assets** — `system/` (global JSON rules) + `agents/<id>/config.json` & `task.md` (per-agent; edit without touching Python). |
 | `backend/` | **Application** — FastAPI `main.py`, `routers/`, `services/` (agents, integrations, **prompt loader**), `core/`, `tasks`, DB models. |
-| `scripts/` | **Dev/ops helpers** — signed webhook & E2E scripts. |
+| `scripts/` | **Dev/ops** — `setup.sh` / `validate_env.py` / `db_init.py` / `test_full_campaign.py` / `deploy_aws.sh` / `export_openapi.py`. |
+| `docs/bubble/` | **Bubble kit** — OpenAPI export, CORS/auth notes, workflow templates (`README.md`, `WORKFLOWS.md`). |
 | `infra/aws/terraform/` | **AWS (Terraform)** — VPC, RDS Postgres, ElastiCache Redis, ECR, ECS Fargate (api / worker / beat), ALB, Secrets Manager. See `infra/aws/terraform/README.md`. |
 | `docs/` | **Product & architecture** — BRD → implementation alignment, phases, costs: `PRODUCT_ARCHITECTURE.md`. |
 | Root | `Dockerfile`, `docker-compose.yml`, `.env.example`. |

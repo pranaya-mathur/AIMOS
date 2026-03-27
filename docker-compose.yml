@@ -1,5 +1,4 @@
 
-version: '3'
 services:
   api:
     build: .
@@ -8,8 +7,22 @@ services:
     env_file:
       - .env
     depends_on:
-      - redis
-      - db
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/live')",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
 
   worker:
     build: .
@@ -17,8 +30,12 @@ services:
     env_file:
       - .env
     depends_on:
-      - redis
-      - db
+      api:
+        condition: service_healthy
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
 
   beat:
     build: .
@@ -26,15 +43,25 @@ services:
     env_file:
       - .env
     depends_on:
-      - redis
-      - db
+      api:
+        condition: service_healthy
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
 
   redis:
-    image: redis
+    image: redis:7-alpine
 
   db:
-    image: postgres
+    image: postgres:15-alpine
     environment:
       POSTGRES_DB: aimos
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d aimos"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+      start_period: 5s

@@ -1,3 +1,5 @@
+import os
+
 from fastapi import APIRouter, HTTPException
 from redis import Redis
 from sqlalchemy import text
@@ -10,7 +12,12 @@ router = APIRouter()
 
 @router.get("/live")
 def live():
-    return {"status": "alive"}
+    """Liveness probe — does not check DB/Redis (fast for orchestrators)."""
+    return {
+        "status": "alive",
+        "git_sha": os.getenv("GIT_SHA") or os.getenv("COMMIT_SHA"),
+        "app_version": os.getenv("APP_VERSION", "1.0.0"),
+    }
 
 
 @router.get("/ready")

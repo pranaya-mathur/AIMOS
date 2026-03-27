@@ -3,6 +3,21 @@ output "alb_dns_name" {
   value       = aws_lb.main.dns_name
 }
 
+output "alb_http_url" {
+  description = "ALB base URL for Bubble / clients (HTTP)."
+  value       = "http://${aws_lb.main.dns_name}"
+}
+
+output "name_prefix" {
+  description = "Prefix used for ECS service names (e.g. aimos-api)."
+  value       = var.name_prefix
+}
+
+output "aws_region" {
+  description = "Deployed region."
+  value       = var.aws_region
+}
+
 output "ecr_repository_url" {
   description = "Push the AIMOS image here, tag :latest (or set container_image)."
   value       = aws_ecr_repository.app.repository_url

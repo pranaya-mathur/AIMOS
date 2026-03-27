@@ -28,6 +28,19 @@ cp terraform.tfvars.example terraform.tfvars
 
 Do **not** commit `terraform.tfvars` (it is gitignored).
 
+## One-command deploy (repo root)
+
+From the **repository root** (after `terraform.tfvars` exists and AWS CLI + Docker work):
+
+```bash
+chmod +x scripts/deploy_aws.sh
+./scripts/deploy_aws.sh
+```
+
+This runs `terraform apply`, builds and pushes **`linux/amd64`** to ECR (for Fargate), then forces new deployments for **api**, **worker**, and **beat**. It prints **`alb_http_url`** and the ECR image URI.
+
+If the **first** `terraform apply` fails because ECS cannot pull an image yet, run **`./scripts/deploy_aws.sh` again** after the first successful push (or push manually, then `aws ecs update-service --force-new-deployment`).
+
 ## First-time deploy (recommended order)
 
 1. **Plan and apply** (creates ECR among other resources):
