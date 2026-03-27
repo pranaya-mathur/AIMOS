@@ -37,4 +37,8 @@ OPENAPI_TAGS = [
         "name": "creatives",
         "description": "Parallel OpenAI creative variations via Celery (`POST /creatives/variations`).",
     },
+    {
+        "name": "usage",
+        "description": "Per-user monthly quotas and OpenAI token / cost estimates (UTC month).",
+    },
 ]

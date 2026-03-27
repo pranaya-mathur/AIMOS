@@ -21,8 +21,8 @@ def creative_variations(
     user: Optional[User] = Depends(get_agency_user),
 ):
     """Queues N parallel OpenAI creative copy tasks (Celery). Poll GET /job/{task_id} for each."""
-    del user
+    uid = user.id if user else None
     task_ids = []
     for i in range(body.n):
-        task_ids.append(generate_variation.delay(body.brief, i).id)
+        task_ids.append(generate_variation.delay(body.brief, i, user_id=uid).id)
     return {"task_ids": task_ids, "count": body.n}

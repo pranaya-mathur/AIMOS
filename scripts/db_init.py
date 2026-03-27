@@ -24,7 +24,7 @@ else:
 
 from sqlalchemy import text
 
-from db import Base, SessionLocal, engine
+from db import Base, SessionLocal, apply_schema_patches, engine
 import models  # noqa: F401 — register ORM models (Campaign, JobAudit, …)
 from models import User
 from services.auth import hash_password
@@ -37,6 +37,7 @@ DEV_PASSWORD = "devpass123"
 
 def main() -> int:
     Base.metadata.create_all(bind=engine)
+    apply_schema_patches()
     with engine.connect() as conn:
         conn.execute(text("SELECT 1"))
 

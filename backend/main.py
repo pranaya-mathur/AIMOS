@@ -8,10 +8,10 @@ from fastapi.openapi.utils import get_openapi
 
 from core.config import get_settings
 from core.logging_config import configure_logging
-from db import Base, engine
+from db import Base, apply_schema_patches, engine
 import models  # noqa: F401  — register ORM models for metadata.create_all
 from openapi_tags import OPENAPI_TAGS
-from routers import agents, auth, billing, campaign, creatives, health, job, launch, media
+from routers import agents, auth, billing, campaign, creatives, health, job, launch, media, usage
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +21,7 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     configure_logging(settings.log_level)
     Base.metadata.create_all(bind=engine)
+    apply_schema_patches()
     logger.info("application_startup complete")
     yield
 
@@ -82,6 +83,7 @@ app.include_router(agents.router, prefix="/agents", tags=["agents"])
 app.include_router(launch.router, prefix="/launch", tags=["launch"])
 app.include_router(creatives.router, prefix="/creatives", tags=["creatives"])
 app.include_router(media.router, prefix="/media", tags=["media"])
+app.include_router(usage.router, prefix="/usage", tags=["usage"])
 
 
 @app.get("/")

@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     stripe_default_price_id: Optional[str] = Field(default=None, validation_alias="STRIPE_DEFAULT_PRICE_ID")
     cors_origins: Optional[str] = Field(default=None, validation_alias="CORS_ORIGINS")
     public_api_base_url: Optional[str] = Field(default=None, validation_alias="PUBLIC_API_BASE_URL")
+    # Per-user defaults (User.monthly_* overrides). -1 = unlimited for that dimension.
+    default_monthly_campaign_quota: int = 50
+    default_monthly_token_quota: int = 5_000_000
+    openai_input_usd_per_million_tokens: float = 0.15
+    openai_output_usd_per_million_tokens: float = 0.60
 
     @property
     def cors_origin_list(self) -> list[str]:

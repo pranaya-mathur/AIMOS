@@ -353,3 +353,10 @@ Full flow (requires API + Redis + Celery worker running, e.g. `docker-compose up
 `python3 scripts/e2e_media_webhook.py --provider adcreative --webhook-secret "$ADCREATIVE_WEBHOOK_SECRET"`
 
 The script calls `POST /media/{provider}/create`, sends a signed `POST /media/webhook/{provider}` with the returned `request_id`, then polls `GET /job/{task_id}` until Celery reports `SUCCESS`.
+
+---
+
+## To-Do
+
+- **Admin API or internal tool** — Set `users.monthly_campaign_quota` and `users.monthly_token_quota` per tenant/plan (today: SQL or direct DB; defaults live in `.env` — see `DEFAULT_MONTHLY_*` and `GET /usage/me`).
+- **Stripe → quotas** — Map subscription / price tier to default monthly campaign and token limits (webhook or sync job updates user rows when checkout or billing changes).

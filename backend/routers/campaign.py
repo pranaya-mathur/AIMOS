@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 from db import get_db
 from deps import get_agency_user
 from models import Campaign, User
+from services.usage.exceptions import QuotaExceededError
+from services.usage.quotas import assert_can_create_campaign
 from tasks import run_campaign
 
 router = APIRouter()
@@ -24,6 +26,12 @@ def create_campaign(
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_agency_user),
 ):
+    if user:
+        try:
+            assert_can_create_campaign(db, user)
+        except QuotaExceededError as exc:
+            raise HTTPException(status_code=429, detail=str(exc)) from exc
+
     cid = str(uuid.uuid4())
     row = Campaign(
         id=cid,

@@ -5,6 +5,7 @@ from celery_app import celery
 from db import SessionLocal
 from models import Campaign
 from services.orchestrator import run_agents
+from services.usage.context import clear_usage_context, set_usage_context
 from services.integrations.media_clients import (
     create_adcreative,
     create_elevenlabs_voiceover,
@@ -62,7 +63,19 @@ def run_campaign(data):
         inner = data["input"] if "input" in data else data
     else:
         inner = data
+
+    ctx_user_id = None
+    if campaign_id:
+        db = SessionLocal()
+        try:
+            row = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+            if row:
+                ctx_user_id = row.user_id
+        finally:
+            db.close()
+
     try:
+        set_usage_context(user_id=ctx_user_id, campaign_id=campaign_id)
         result = run_agents(inner)
     except Exception:
         if campaign_id:
@@ -75,6 +88,9 @@ def run_campaign(data):
             finally:
                 db.close()
         raise
+    finally:
+        clear_usage_context()
+
     if campaign_id:
         _persist_campaign_result(campaign_id, result)
     return result
@@ -113,15 +129,19 @@ def send_google_ads_placeholder_task(campaign_name: str, customer_id=None):
 
 
 @celery.task
-def generate_variation(brief: str, index: int):
+def generate_variation(brief: str, index: int, user_id: str | None = None):
     from services.integrations.openai_service import generate_text
 
-    prompt = (
-        f"Write one creative marketing copy variation #{index + 1} for this brief. "
-        "Return plain text only.\n\nBrief:\n"
-        f"{brief}"
-    )
-    return {"index": index, "copy": generate_text(prompt)}
+    try:
+        set_usage_context(user_id=user_id, campaign_id=None)
+        prompt = (
+            f"Write one creative marketing copy variation #{index + 1} for this brief. "
+            "Return plain text only.\n\nBrief:\n"
+            f"{brief}"
+        )
+        return {"index": index, "copy": generate_text(prompt)}
+    finally:
+        clear_usage_context()
 
 
 @celery.task
