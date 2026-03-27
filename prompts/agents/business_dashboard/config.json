@@ -2,17 +2,14 @@
   "agent_name": "business_dashboard",
   "output_key": "dashboard_summary",
   "schema": {
-    "summary_cards": [
-      "string"
-    ],
-    "alerts": [
-      "string"
-    ],
-    "quick_actions": [
-      "string"
-    ],
-    "mobile_notes": [
-      "string"
-    ]
+    "headline_health": "string",
+    "summary_cards": ["string"],
+    "funnel_snapshot": ["string"],
+    "alerts": ["string"],
+    "wins_this_period": ["string"],
+    "priority_fixes": ["string"],
+    "quick_actions": ["string"],
+    "mobile_notes": ["string"],
+    "exec_questions_to_ask_team": ["string"]
   }
 }

@@ -2,17 +2,16 @@
   "agent_name": "customer_engagement",
   "output_key": "engagement_plan",
   "schema": {
-    "email_sequences": [
-      "string"
-    ],
-    "sms_touches": [
-      "string"
-    ],
-    "whatsapp_touches": [
-      "string"
-    ],
-    "loyalty_ideas": [
-      "string"
-    ]
+    "lifecycle_strategy": "string",
+    "onboarding_sequence": ["string"],
+    "email_sequences": ["string"],
+    "sms_touches": ["string"],
+    "whatsapp_touches": ["string"],
+    "retention_and_health_metrics": ["string"],
+    "loyalty_ideas": ["string"],
+    "winback_playbook": ["string"],
+    "referral_program_sketch": ["string"],
+    "feedback_and_nps_notes": ["string"],
+    "handoff_to_analytics_engine": ["string"]
   }
 }

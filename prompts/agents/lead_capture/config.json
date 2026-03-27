@@ -2,17 +2,17 @@
   "agent_name": "lead_capture",
   "output_key": "lead_system",
   "schema": {
-    "landing_page_outline": [
-      "string"
-    ],
-    "form_fields": [
-      "string"
-    ],
-    "crm_fields": [
-      "string"
-    ],
-    "whatsapp_flow": [
-      "string"
-    ]
+    "conversion_strategy": "string",
+    "landing_page_outline": ["string"],
+    "above_the_fold_copy": ["string"],
+    "form_fields": ["string"],
+    "progressive_profiling_notes": ["string"],
+    "crm_fields": ["string"],
+    "lead_routing_rules": ["string"],
+    "whatsapp_flow": ["string"],
+    "sms_or_email_instant_response": ["string"],
+    "lead_scoring_criteria": ["string"],
+    "privacy_and_consent_notes": ["string"],
+    "handoff_to_sales_agent": ["string"]
   }
 }

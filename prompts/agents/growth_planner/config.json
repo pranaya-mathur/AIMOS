@@ -2,11 +2,15 @@
   "agent_name": "growth_planner",
   "output_key": "growth_recommendations",
   "schema": {
+    "situation_synthesis": "string",
+    "strategic_bets": ["string"],
     "next_channel_focus": "string",
     "next_content_type": "string",
     "budget_recommendation": "string",
-    "next_90_day_actions": [
-      "string"
-    ]
+    "resource_and_hiring_notes": ["string"],
+    "partnership_and_pr_sketches": ["string"],
+    "risk_mitigation": ["string"],
+    "next_90_day_actions": ["string"],
+    "handoff_to_business_dashboard": ["string"]
   }
 }

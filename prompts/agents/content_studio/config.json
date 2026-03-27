@@ -2,18 +2,17 @@
   "agent_name": "content_studio",
   "output_key": "content_assets",
   "schema": {
-    "graphics_briefs": [
-      "string"
-    ],
-    "video_briefs": [
-      "string"
-    ],
-    "voice_briefs": [
-      "string"
-    ],
+    "content_strategy_summary": "string",
+    "key_messages": ["string"],
+    "graphics_briefs": ["string"],
+    "video_briefs": ["string"],
+    "voice_briefs": ["string"],
+    "copy_blocks_headlines": ["string"],
+    "copy_blocks_body_short": ["string"],
     "variation_count": "string",
-    "production_notes": [
-      "string"
-    ]
+    "format_specs": ["string"],
+    "production_notes": ["string"],
+    "accessibility_and_legal_notes": ["string"],
+    "handoff_to_campaign_builder": ["string"]
   }
 }

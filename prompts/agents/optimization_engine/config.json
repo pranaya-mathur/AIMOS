@@ -2,17 +2,15 @@
   "agent_name": "optimization_engine",
   "output_key": "optimization_rules",
   "schema": {
-    "pause_rules": [
-      "string"
-    ],
-    "scale_rules": [
-      "string"
-    ],
-    "experiment_backlog": [
-      "string"
-    ],
-    "budget_shifts": [
-      "string"
-    ]
+    "optimization_principles": "string",
+    "pause_rules": ["string"],
+    "scale_rules": ["string"],
+    "creative_fatigue_signals": ["string"],
+    "budget_shifts": ["string"],
+    "experiment_backlog": ["string"],
+    "test_prioritization_framework": ["string"],
+    "guardrails_and_brand_safety": ["string"],
+    "automation_vs_human_review": ["string"],
+    "handoff_to_growth_planner": ["string"]
   }
 }

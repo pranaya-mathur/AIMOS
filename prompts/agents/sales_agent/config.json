@@ -2,15 +2,17 @@
   "agent_name": "sales_agent",
   "output_key": "sales_playbook",
   "schema": {
-    "qualification_questions": [
-      "string"
-    ],
-    "objection_handling": [
-      "string"
-    ],
+    "sales_motion_summary": "string",
+    "qualification_framework": "string",
+    "qualification_questions": ["string"],
+    "discovery_call_flow": ["string"],
+    "demo_or_pitch_outline": ["string"],
+    "objection_handling": ["string"],
+    "pricing_talk_tracks": ["string"],
     "booking_flow": "string",
-    "follow_up_scripts": [
-      "string"
-    ]
+    "follow_up_scripts": ["string"],
+    "proposal_or_next_step_templates": ["string"],
+    "crm_hygiene_rules": ["string"],
+    "handoff_to_customer_engagement": ["string"]
   }
 }

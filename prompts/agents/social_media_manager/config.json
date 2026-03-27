@@ -2,17 +2,16 @@
   "agent_name": "social_media_manager",
   "output_key": "social_calendar",
   "schema": {
-    "channels": [
-      "string"
-    ],
-    "posting_calendar": [
-      "string"
-    ],
-    "hashtag_sets": [
-      "string"
-    ],
-    "engagement_metrics": [
-      "string"
-    ]
+    "channel_strategy": "string",
+    "channels": ["string"],
+    "content_pillars": ["string"],
+    "posting_calendar": ["string"],
+    "sample_posts": ["string"],
+    "hashtag_sets": ["string"],
+    "community_management_playbook": ["string"],
+    "influencer_or_ugc_notes": ["string"],
+    "engagement_metrics": ["string"],
+    "listening_and_crisis_notes": ["string"],
+    "handoff_to_lead_capture": ["string"]
   }
 }

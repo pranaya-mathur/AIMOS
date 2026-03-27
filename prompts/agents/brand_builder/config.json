@@ -2,18 +2,21 @@
   "agent_name": "brand_builder",
   "output_key": "brand_kit",
   "schema": {
-    "logo_direction": [
-      "string"
-    ],
-    "color_palette": [
-      "string"
-    ],
+    "brand_narrative": "string",
+    "value_proposition_primary": "string",
+    "value_proposition_alternates": ["string"],
+    "positioning_statement": "string",
+    "logo_direction": ["string"],
+    "color_palette": ["string"],
+    "typography_direction": ["string"],
+    "imagery_direction": ["string"],
     "brand_voice": "string",
-    "social_templates": [
-      "string"
-    ],
-    "tone_guidelines": [
-      "string"
-    ]
+    "tone_guidelines": ["string"],
+    "words_to_use": ["string"],
+    "words_to_avoid": ["string"],
+    "social_templates": ["string"],
+    "messaging_pillars": ["string"],
+    "proof_and_trust_elements": ["string"],
+    "handoff_to_content_studio": ["string"]
   }
 }

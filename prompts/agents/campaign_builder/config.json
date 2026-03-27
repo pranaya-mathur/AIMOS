@@ -2,20 +2,19 @@
   "agent_name": "campaign_builder",
   "output_key": "campaign_plan",
   "schema": {
-    "objectives": [
-      "string"
-    ],
-    "targeting_hypotheses": [
-      "string"
-    ],
-    "placements": [
-      "string"
-    ],
-    "budget_split": [
-      "string"
-    ],
-    "launch_checklist": [
-      "string"
-    ]
+    "campaign_summary": "string",
+    "objectives": ["string"],
+    "success_metrics": ["string"],
+    "funnel_stages": ["string"],
+    "targeting_hypotheses": ["string"],
+    "audience_segments": ["string"],
+    "placements": ["string"],
+    "creative_matrix": ["string"],
+    "budget_split": ["string"],
+    "bid_and_delivery_notes": ["string"],
+    "conversion_tracking_plan": ["string"],
+    "launch_checklist": ["string"],
+    "day_7_and_day_30_reviews": ["string"],
+    "handoff_to_social_media_manager": ["string"]
   }
 }

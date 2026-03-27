@@ -4,6 +4,16 @@ from services.integrations.openai_service import generate_text
 from services.prompts.loader import get_system_response_contract
 
 
+def _pretty_json_block(value) -> str:
+    """Serialize prompt payload for task templates (indent=2, UTF-8, non-JSON values via str)."""
+    if value is None:
+        return "null"
+    try:
+        return json.dumps(value, indent=2, ensure_ascii=False, default=str)
+    except TypeError:
+        return json.dumps(str(value), indent=2, ensure_ascii=False)
+
+
 def _extract_json_block(raw_text: str):
     if not raw_text:
         return None
@@ -24,7 +34,10 @@ def run_agent(state: dict, *, name: str, output_key: str, schema: dict, prompt_t
     input_payload = state.get("input", {})
     context = state.get("agent_outputs", {})
 
-    prompt = prompt_template.format(input=input_payload, context=context)
+    prompt = prompt_template.format(
+        input=_pretty_json_block(input_payload),
+        context=_pretty_json_block(context),
+    )
     schema_hint = json.dumps(schema, indent=2)
     contract = get_system_response_contract()
     full_prompt = (
