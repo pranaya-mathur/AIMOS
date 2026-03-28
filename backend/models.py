@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, JSON, Numeric, String
+from sqlalchemy import Column, Date, DateTime, ForeignKey, Index, Integer, JSON, Numeric, String
 from sqlalchemy.sql import func
 
 from db import Base
@@ -66,3 +66,45 @@ class UsageEvent(Base):
     total_tokens = Column(Integer, nullable=False, default=0)
     cost_usd = Column(Numeric(12, 6), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+
+
+class Lead(Base):
+    __tablename__ = "leads"
+
+    id = Column(String, primary_key=True)
+    phone = Column(String, unique=True, nullable=False, index=True)
+    full_name = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    campaign_id = Column(String, ForeignKey("campaigns.id", ondelete="SET NULL"), nullable=True, index=True)
+    lead_metadata = Column(JSON, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class ConversationMessage(Base):
+    __tablename__ = "conversation_messages"
+
+    id = Column(String, primary_key=True)
+    lead_id = Column(String, ForeignKey("leads.id", ondelete="CASCADE"), nullable=False, index=True)
+    direction = Column(String, nullable=False)  # inbound | outbound
+    content = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class CampaignMetric(Base):
+    """Daily performance snapshots for optimization."""
+
+    __tablename__ = "campaign_metrics"
+
+    id = Column(String, primary_key=True)
+    campaign_id = Column(String, ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False, index=True)
+    day = Column(Date, nullable=False, index=True)
+    platform = Column(String, nullable=False, index=True)  # meta | google | x
+
+    spend = Column(Numeric(12, 4), default=0)
+    impressions = Column(Integer, default=0)
+    clicks = Column(Integer, default=0)
+    conversions = Column(Integer, default=0)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (Index("ix_metrics_campaign_day", "campaign_id", "day"),)

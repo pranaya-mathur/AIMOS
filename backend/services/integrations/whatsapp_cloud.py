@@ -27,6 +27,11 @@ def _require_env(name: str) -> str:
 
 def send_text_message(*, to_e164: str, body: str) -> dict:
     """Send plain text (user must have opted in / thread rules apply)."""
+    if os.getenv("MOCK_WHATSAPP") == "1":
+        import logging
+        logging.getLogger(__name__).info("[MOCK WHATSAPP] To: %s, Body: %s", to_e164, body)
+        return {"provider": "whatsapp", "mock": True, "raw": {"message_id": "mock_id"}}
+
     token = _require_env("WHATSAPP_CLOUD_TOKEN")
     phone_id = _require_env("WHATSAPP_PHONE_NUMBER_ID")
 

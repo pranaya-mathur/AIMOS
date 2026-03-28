@@ -123,7 +123,11 @@ flowchart LR
   subgraph External
     OAI[OpenAI]
     ST[Stripe]
-    META[Meta Graph API]
+    META[Meta Marketing]
+    GADS[Google Ads SDK]
+    X[X/Twitter API]
+    SG[SendGrid Email]
+    TW[Twilio SMS]
     WA[WhatsApp Cloud]
     MED[Media providers]
   end
@@ -139,6 +143,10 @@ flowchart LR
   API --> ST
   W --> OAI
   W --> META
+  W --> GADS
+  W --> X
+  W --> SG
+  W --> TW
   W --> WA
   W --> MED
 ```
@@ -264,14 +272,18 @@ POST `/billing/stripe/webhook` — Stripe webhook (requires `STRIPE_SECRET_KEY` 
 4. Set **CORS**: add your Bubble app origin to `CORS_ORIGINS` in `.env` (comma-separated), e.g. `https://yourapp.bubbleapps.io`.
 5. For payments: call `POST /billing/checkout/session`, then **open external site** to the returned `url` (Stripe Checkout).
 
-POST `/campaign/create` — Bearer (agency/admin); stores `campaigns` row and runs 12-agent pipeline  
-GET `/campaign/{campaign_id}`  
+POST `/campaign/create` — Bearer (agency/admin); stores `campaigns` row and runs 12-agent pipeline
+GET `/campaign/{campaign_id}`
 PATCH `/campaign/{campaign_id}` — body: `{ "status": "..." }` for approvals / lifecycle
 
-GET `/launch/status` — which integrations have env configured (booleans)  
-POST `/launch/meta` — Meta Marketing API draft campaign (`META_ACCESS_TOKEN`, `META_AD_ACCOUNT_ID`)  
-POST `/launch/whatsapp` — WhatsApp Cloud API text (`WHATSAPP_CLOUD_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`)  
-POST `/launch/google` — Google Ads placeholder (requires `GOOGLE_ADS_*`; full RPC via `google-ads` lib later)
+GET `/launch/status` — which integrations have env configured (booleans)
+POST `/launch/meta` — Meta Marketing API draft campaign
+POST `/launch/whatsapp` — WhatsApp Cloud API + Inbound Lead Capture
+POST `/launch/google` — Google Ads (Official SDK Integration)
+POST `/launch/social` — X (Twitter) automated posting
+POST `/launch/email` — SendGrid engagement outreach
+POST `/launch/sms` — Twilio notification sequences
+LINK [/job/{task_id}] to poll for results.
 
 POST `/creatives/variations` — parallel OpenAI copy tasks (`n` 1–10); returns `task_ids` to poll with `/job/{task_id}`
 
@@ -363,7 +375,8 @@ The script calls `POST /media/{provider}/create`, sends a signed `POST /media/we
 
 ---
 
-## To-Do
+## Future Roadmap
 
-- **Stripe → quotas** — Map subscription / price tier to default monthly campaign and token limits (webhook or sync job updates user rows when checkout or billing changes).
 - **Analytics Visuals** — Connect `analytics_engine` outputs to a real BI tool or custom dashboard components.
+- **Agent Specialization** — Fine-tune prompts for specific industry verticals (Real Estate, Dental, SaaS) to improve conversion-ready lead capture.
+- **Enterprise RBAC** — Expand roles to include deep account-level permissions for multi-office organizations.

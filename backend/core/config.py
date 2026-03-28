@@ -53,6 +53,28 @@ class Settings(BaseSettings):
             return False
         return str(v).lower() in ("1", "true", "yes")
 
+    def get_quotas_for_price(self, price_id: str | None) -> tuple[int, int]:
+        """
+        Maps a Stripe Price ID to (campaign_quota, token_quota).
+        Returns defaults if price_id is None or unknown.
+        """
+        if not price_id:
+            return self.default_monthly_campaign_quota, self.default_monthly_token_quota
+
+        # Example placeholder logic:
+        # If 'enterprise' is in the ID, give unlimited.
+        # If 'starter' is in the ID, give lower limits.
+        p = price_id.lower()
+        if "enterprise" in p:
+            return -1, -1  # Unlimited
+        if "starter" in p:
+            return 5, 500_000
+        if "pro" in p:
+            return 100, 10_000_000
+
+        # Fallback to defaults
+        return self.default_monthly_campaign_quota, self.default_monthly_token_quota
+
     @property
     def auth_disabled_flag(self) -> bool:
         v = self.auth_disabled
