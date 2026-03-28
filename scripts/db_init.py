@@ -26,7 +26,7 @@ from sqlalchemy import text
 
 from db import Base, SessionLocal, apply_schema_patches, engine
 import models  # noqa: F401 — register ORM models (Campaign, JobAudit, …)
-from models import User
+from models import Organization, User
 from services.auth import hash_password
 
 
@@ -43,8 +43,21 @@ def main() -> int:
 
     db = SessionLocal()
     try:
+        # Seed default organization
+        org_id = "org-default"
+        org = db.query(Organization).filter(Organization.id == org_id).first()
+        if not org:
+            org = Organization(id=org_id, name="Default Organization")
+            db.add(org)
+            db.commit()
+            print(f"Seeded organization: {org.name}")
+
         existing = db.query(User).filter(User.email == DEV_EMAIL).first()
         if existing:
+            if not existing.organization_id:
+                existing.organization_id = org_id
+                db.commit()
+                print(f"Updated existing seed user with org_id: {org_id}")
             print(f"Seed user already exists: {DEV_EMAIL}")
             return 0
         uid = str(uuid.uuid4())
@@ -54,10 +67,11 @@ def main() -> int:
             hashed_password=hash_password(DEV_PASSWORD),
             role="platform_admin",
             full_name="AIMOS Dev User",
+            organization_id=org_id,
         )
         db.add(user)
         db.commit()
-        print(f"Created dev user: {DEV_EMAIL} / {DEV_PASSWORD} (platform_admin)")
+        print(f"Created dev user: {DEV_EMAIL} / {DEV_PASSWORD} (platform_admin, org: {org_id})")
         return 0
     except Exception as exc:
         print(f"ERROR: {exc}", file=sys.stderr)

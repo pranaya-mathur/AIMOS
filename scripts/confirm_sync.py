@@ -19,15 +19,51 @@ def check_step(name, success_msg, fail_msg, check_fn):
         return False
 
 def check_health():
-    resp = requests.get(f"{BASE_URL}/health/ready")
-    return resp.status_code == 200
+    # 1. Check basic ready endpoint
+    try:
+        resp1 = requests.get(f"{BASE_URL}/health/ready")
+        if resp1.status_code != 200:
+            print(f"Health Ready Failed: {resp1.status_code}")
+            return False
+    except Exception as e:
+        print(f"Health Ready Exception: {e}")
+        return False
+        
+    # 2. Login as dev user to get Bearer token (expecting JSON body)
+    try:
+        login_resp = requests.post(
+            f"{BASE_URL}/auth/login",
+            json={"email": "aimos-dev@example.com", "password": "devpass123"}
+        )
+        if login_resp.status_code != 200:
+            print(f"Login failed: {login_resp.status_code} {login_resp.text}")
+            return False
+        token = login_resp.json().get("access_token")
+    except Exception as e:
+        print(f"Login Exception: {e}")
+        return False
+        
+    # 3. Check authenticated analytics endpoint
+    try:
+        resp2 = requests.get(
+            f"{BASE_URL}/analytics/global",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        if resp2.status_code != 200:
+            print(f"Analytics Global Failed: {resp2.status_code} {resp2.text}")
+            return False
+    except Exception as e:
+        print(f"Analytics Global Exception: {e}")
+        return False
+        
+    return True
 
 def check_db_tables():
     import subprocess
     cmd = "docker-compose exec -T api python3 -c \"from db import engine; from sqlalchemy import inspect; print(inspect(engine).get_table_names())\""
     res = subprocess.check_output(cmd, shell=True).decode()
     tables = eval(res.strip())
-    expected = {'users', 'campaigns', 'job_audits', 'usage_events', 'leads', 'conversation_messages', 'campaign_metrics'}
+    expected = {'users', 'campaigns', 'job_audits', 'usage_events', 'leads', 'conversation_messages', 'campaign_metrics', 'organizations'}
     return expected.issubset(set(tables))
 
 def check_celery_tasks():

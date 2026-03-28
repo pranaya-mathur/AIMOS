@@ -4,6 +4,16 @@ from sqlalchemy.sql import func
 from db import Base
 
 
+class Organization(Base):
+    """Multi-office / multi-tenant boundary."""
+
+    __tablename__ = "organizations"
+
+    id = Column(String, primary_key=True)
+    name = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
 class User(Base):
     """BRD roles: platform_admin | agency_client | end_customer."""
 
@@ -14,6 +24,7 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     role = Column(String, nullable=False, default="agency_client", index=True)
     full_name = Column(String, nullable=True)
+    organization_id = Column(String, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     # Per-user overrides: NULL → server default from env; -1 → unlimited for that dimension.
     monthly_campaign_quota = Column(Integer, nullable=True)
@@ -32,6 +43,7 @@ class Campaign(Base):
     input = Column(JSON, nullable=True)
     output = Column(JSON, nullable=True)
     celery_task_id = Column(String, nullable=True, index=True)
+    organization_id = Column(String, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True)
     stripe_checkout_session_id = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

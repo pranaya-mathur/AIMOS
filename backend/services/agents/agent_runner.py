@@ -1,4 +1,5 @@
 import json
+import os
 
 from services.integrations.openai_service import generate_text
 from services.prompts.loader import get_system_response_contract
@@ -40,11 +41,24 @@ def run_agent(state: dict, *, name: str, output_key: str, schema: dict, prompt_t
     )
     schema_hint = json.dumps(schema, indent=2)
     contract = get_system_response_contract()
+    # Vertical Specialization
+    vertical = input_payload.get("industry_vertical")
+    vertical_prompt = ""
+    if vertical:
+        v_path = os.path.join(os.getcwd(), "prompts", "verticals", f"{vertical.lower()}.md")
+        if os.path.exists(v_path):
+            try:
+                with open(v_path, "r", encoding="utf-8") as f:
+                    vertical_prompt = f"\n\n### Industry Vertical Expertise ({vertical}):\n{f.read()}"
+            except Exception:
+                pass
+
     full_prompt = (
         f"You are the {name} agent for an enterprise marketing system.\n"
         f"{contract}\n\n"
         f"Required JSON schema shape:\n{schema_hint}\n\n"
         f"Task:\n{prompt}"
+        f"{vertical_prompt}"
     )
 
     raw = generate_text(full_prompt)

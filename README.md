@@ -23,7 +23,7 @@ AI Marketing Operating System — **FastAPI** backend with JWT auth, Stripe bill
 |--------------------|--------|----------|
 | **1 — MVP** | Core campaign flow: strategy → content → approval → launch | ~2–3 weeks |
 | **2** | Execution + lead capture (ads, landing, WhatsApp, etc.) | +2–3 weeks |
-| **3** | Analytics + optimization loop | +3–4 weeks |
+| **3 — Analytics** | Analytics + optimization loop (Enterprise) | PROD-READY |
 
 **Rough MVP monthly cost band (India):** ~₹30k–₹50k combined (AWS + Bubble + AI/media APIs); **AI usage is the main variable**. See the doc above for breakdown.
 
@@ -259,6 +259,13 @@ Protected by `platform_admin` role.
 - `GET /admin/users` — List all users + quotas.
 - `GET /admin/users/{user_id}` — Detailed profile + monthly usage summary.
 - `PATCH /admin/users/{user_id}` — Update `role`, `monthly_campaign_quota`, or `monthly_token_quota`.
+- `GET /admin/organizations` — List all enterprise organizations.
+- `POST /admin/organizations` — Create a new multi-office organization.
+
+### Analytics & BI
+- `GET /analytics/global` — Aggregated metrics (Spend, Leads, CTR, CVR) across visible campaigns.
+- `GET /analytics/usage` — Detailed AI token usage and cost tracking (per user/model).
+- `GET /analytics/campaign/{id}` — Performance drill-down for a single campaign.
 
 POST `/billing/checkout/session` — create Stripe Checkout (returns `url`). Body: `campaign_id`, `success_url`, `cancel_url`, optional `price_id` (else `STRIPE_DEFAULT_PRICE_ID`). Sets campaign `pending_payment` until webhook fires.
 
@@ -313,6 +320,12 @@ Media create endpoints enqueue a single Celery task (`media.run_provider`) and w
 10. `optimization_engine` — AI Optimization Engine
 11. `growth_planner` — AI Growth Planner
 12. `business_dashboard` — AI Business Dashboard (summary for UI)
+
+### Industry Verticals (Specialization)
+Agents now support dedicated "Expertise" injection for high-conversion leads in specific niches. Pass `industry_vertical` in the campaign input:
+- **Real Estate**: Focus on neighborhood trust, IDX-ready copy, and showing urgency.
+- **Dental**: Focus on patient comfort, emergency availability, and local proximity.
+- **SaaS**: Focus on product-led growth (PLG), free trials, and integration trust.
 
 ---
 
@@ -375,8 +388,6 @@ The script calls `POST /media/{provider}/create`, sends a signed `POST /media/we
 
 ---
 
-## Future Roadmap
-
-- **Analytics Visuals** — Connect `analytics_engine` outputs to a real BI tool or custom dashboard components.
-- **Agent Specialization** — Fine-tune prompts for specific industry verticals (Real Estate, Dental, SaaS) to improve conversion-ready lead capture.
-- **Enterprise RBAC** — Expand roles to include deep account-level permissions for multi-office organizations.
+- **Whitelabel Portal** — Custom subdomains and branding for end-customers.
+- **Advanced Predictive SHAP** — Lead-level explanation of "why" a conversion was predicted.
+- **Auto-A/B Testing** — Real-time automated creative rotation based on CTR signals.

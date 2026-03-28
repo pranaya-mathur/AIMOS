@@ -11,7 +11,7 @@ from core.logging_config import configure_logging
 from db import Base, apply_schema_patches, engine
 import models  # noqa: F401  — register ORM models for metadata.create_all
 from openapi_tags import OPENAPI_TAGS
-from routers import admin, agents, auth, billing, campaign, creatives, health, job, launch, media, usage, webhooks
+from routers import admin, agents, analytics, auth, billing, campaign, creatives, health, job, launch, media, usage, webhooks
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +85,7 @@ app.include_router(launch.router, prefix="/launch", tags=["launch"])
 app.include_router(creatives.router, prefix="/creatives", tags=["creatives"])
 app.include_router(media.router, prefix="/media", tags=["media"])
 app.include_router(usage.router, prefix="/usage", tags=["usage"])
+app.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
 app.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
 
 

@@ -24,6 +24,8 @@ def apply_schema_patches() -> None:
     stmts = [
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS monthly_campaign_quota INTEGER",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS monthly_token_quota INTEGER",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS organization_id VARCHAR REFERENCES organizations(id) ON DELETE SET NULL",
+        "ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS organization_id VARCHAR REFERENCES organizations(id) ON DELETE SET NULL",
     ]
     with engine.begin() as conn:
         for sql in stmts:

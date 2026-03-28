@@ -36,6 +36,7 @@ def create_campaign(
     row = Campaign(
         id=cid,
         user_id=user.id if user else None,
+        organization_id=user.organization_id if user else None,
         name=body.name,
         status="pending_approval",
         input=body.input,
@@ -58,8 +59,12 @@ def get_campaign(
     row = db.query(Campaign).filter(Campaign.id == campaign_id).first()
     if not row:
         raise HTTPException(status_code=404, detail="Campaign not found")
-    if user and row.user_id and row.user_id != user.id and user.role != "platform_admin":
-        raise HTTPException(status_code=403, detail="Forbidden")
+    if user and user.role != "platform_admin":
+        if row.organization_id:
+            if row.organization_id != user.organization_id:
+                raise HTTPException(status_code=403, detail="Forbidden: Organization mismatch")
+        elif row.user_id and row.user_id != user.id:
+            raise HTTPException(status_code=403, detail="Forbidden: Ownership mismatch")
     return {
         "id": row.id,
         "name": row.name,
@@ -101,8 +106,12 @@ def patch_campaign(
     row = db.query(Campaign).filter(Campaign.id == campaign_id).first()
     if not row:
         raise HTTPException(status_code=404, detail="Campaign not found")
-    if user and row.user_id and row.user_id != user.id and user.role != "platform_admin":
-        raise HTTPException(status_code=403, detail="Forbidden")
+    if user and user.role != "platform_admin":
+        if row.organization_id:
+            if row.organization_id != user.organization_id:
+                raise HTTPException(status_code=403, detail="Forbidden: Organization mismatch")
+        elif row.user_id and row.user_id != user.id:
+            raise HTTPException(status_code=403, detail="Forbidden: Ownership mismatch")
     if body.status:
         if body.status not in _ALLOWED_CAMPAIGN_STATUS:
             raise HTTPException(status_code=400, detail="Invalid status")
