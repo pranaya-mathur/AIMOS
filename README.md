@@ -67,7 +67,8 @@ Agent **code** stays thin (`services/agents/*.py`); **wording and schemas** live
    - [http://localhost:8000/docs](http://localhost:8000/docs) — Swagger UI
    - [http://localhost:8000/health/ready](http://localhost:8000/health/ready) — DB + Redis check
 
-5. **Local dev without JWT** (never in production): set `AUTH_DISABLED=1` in `.env` so `/campaign/*`, `/agents/*`, `/launch/*`, and `/creatives/*` skip token checks.
+5. **Local dev with hot-reload**: The `docker-compose.yml` mounts `./backend`, `./scripts`, and `./prompts` as volumes. Changes to these directories will be reflected immediately in the running containers.
+6. **Local dev without JWT** (never in production): set `AUTH_DISABLED=1` in `.env` so `/admin/*`, `/campaign/*`, `/agents/*`, `/launch/*`, and `/creatives/*` skip token checks.
 
 **Local venv (optional, no Docker):** `python3.10 -m venv venv && source venv/bin/activate && pip install -r backend/requirements.txt`, then from `backend/`: `uvicorn main:app --reload --host 0.0.0.0 --port 8000` (with Postgres + Redis running and `.env` at repo root). Celery: `celery -A celery_app.celery worker` and `celery -A celery_app.celery beat` in separate shells from `backend/`.
 
@@ -241,9 +242,15 @@ GET `/health/ready` — Postgres + Redis connectivity
 
 **Auth (JWT)** — set `JWT_SECRET` in `.env`. Use `AUTH_DISABLED=1` **only** for local dev (skips JWT on `/campaign/*`, `/agents/*`, `/launch/*`, `/creatives/*`).
 
-POST `/auth/register` — body: `email`, `password`, optional `full_name`, `role` (`agency_client` | `end_customer`). Create `platform_admin` users via DB seed, not public register.  
+POST `/auth/register` — body: `email`, `password`, optional `full_name`, `role` (`agency_client` | `end_customer`). Create `platform_admin` users via DB seed (`scripts/db_init.py`), not public register.  
 POST `/auth/login`  
 GET `/auth/me` — Bearer token
+
+### Admin API
+Protected by `platform_admin` role.
+- `GET /admin/users` — List all users + quotas.
+- `GET /admin/users/{user_id}` — Detailed profile + monthly usage summary.
+- `PATCH /admin/users/{user_id}` — Update `role`, `monthly_campaign_quota`, or `monthly_token_quota`.
 
 POST `/billing/checkout/session` — create Stripe Checkout (returns `url`). Body: `campaign_id`, `success_url`, `cancel_url`, optional `price_id` (else `STRIPE_DEFAULT_PRICE_ID`). Sets campaign `pending_payment` until webhook fires.
 
@@ -358,5 +365,5 @@ The script calls `POST /media/{provider}/create`, sends a signed `POST /media/we
 
 ## To-Do
 
-- **Admin API or internal tool** — Set `users.monthly_campaign_quota` and `users.monthly_token_quota` per tenant/plan (today: SQL or direct DB; defaults live in `.env` — see `DEFAULT_MONTHLY_*` and `GET /usage/me`).
 - **Stripe → quotas** — Map subscription / price tier to default monthly campaign and token limits (webhook or sync job updates user rows when checkout or billing changes).
+- **Analytics Visuals** — Connect `analytics_engine` outputs to a real BI tool or custom dashboard components.
