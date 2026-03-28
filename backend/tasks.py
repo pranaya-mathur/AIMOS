@@ -62,6 +62,9 @@ def _persist_campaign_result(campaign_id: str, result: object) -> None:
 
 @celery.task
 def run_campaign(data):
+    import time
+    start_time = time.time()
+    
     campaign_id = None
     if isinstance(data, dict):
         campaign_id = data.get("campaign_id")
@@ -81,6 +84,7 @@ def run_campaign(data):
 
     try:
         set_usage_context(user_id=ctx_user_id, campaign_id=campaign_id)
+        # result is the Graph State at the end of the 12-agent walk
         result = run_agents(inner)
     except Exception:
         if campaign_id:
@@ -95,6 +99,37 @@ def run_campaign(data):
         raise
     finally:
         clear_usage_context()
+
+    # Calculate duration and build a professional summary for the Bubble/Dashboard response
+    duration_ms = int((time.time() - start_time) * 1000)
+    
+    # Extract total tokens and cost from the UsageEvent table for this campaign
+    tokens = 0
+    cost = 0
+    db = SessionLocal()
+    try:
+        from sqlalchemy import func
+        from models import UsageEvent
+        row = db.query(
+            func.sum(UsageEvent.total_tokens).label("tokens"),
+            func.sum(UsageEvent.cost_usd).label("cost")
+        ).filter(UsageEvent.campaign_id == campaign_id).first()
+        if row and row.tokens:
+            tokens = int(row.tokens)
+            cost = float(row.cost or 0)
+    except Exception:
+        logger.warning("Could not calculate usage for campaign %s", campaign_id)
+    finally:
+        db.close()
+
+    # Enrichment for the final JSON result
+    result["status"] = "SUCCESS"
+    result["duration_ms"] = duration_ms
+    result["campaign_id"] = campaign_id
+    
+    # Generate a professional summary string
+    roi_hint = "high" # Fallback if ROI is not easily parsed
+    result["summary"] = f"Campaign processed successfully. Total tokens: {tokens:,}. Estimated cost: ${cost:.2f}. Strategy ready for launch."
 
     if campaign_id:
         _persist_campaign_result(campaign_id, result)
