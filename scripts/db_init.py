@@ -52,12 +52,12 @@ def main() -> int:
             id=uid,
             email=DEV_EMAIL,
             hashed_password=hash_password(DEV_PASSWORD),
-            role="agency_client",
+            role="platform_admin",
             full_name="AIMOS Dev User",
         )
         db.add(user)
         db.commit()
-        print(f"Created dev user: {DEV_EMAIL} / {DEV_PASSWORD} (agency_client)")
+        print(f"Created dev user: {DEV_EMAIL} / {DEV_PASSWORD} (platform_admin)")
         return 0
     except Exception as exc:
         print(f"ERROR: {exc}", file=sys.stderr)

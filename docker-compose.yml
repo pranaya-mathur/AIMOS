@@ -24,7 +24,8 @@ services:
       retries: 30
       start_period: 15s
     volumes:
-      # Hot-reload prompt edits without rebuilding the image (remove for immutable prod deploys)
+      - ./backend:/app
+      - ./scripts:/app/scripts
       - ./prompts:/app/prompts
 
   worker:
@@ -40,6 +41,8 @@ services:
       redis:
         condition: service_started
     volumes:
+      - ./backend:/app
+      - ./scripts:/app/scripts
       - ./prompts:/app/prompts
 
   beat:
@@ -55,6 +58,8 @@ services:
       redis:
         condition: service_started
     volumes:
+      - ./backend:/app
+      - ./scripts:/app/scripts
       - ./prompts:/app/prompts
 
   redis:

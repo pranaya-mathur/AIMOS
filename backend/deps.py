@@ -64,3 +64,13 @@ def get_agency_user(
     if user.role not in ("agency_client", "platform_admin"):
         raise HTTPException(status_code=403, detail="Agency or admin role required")
     return user
+
+
+def get_admin_user(user: User = Depends(get_current_user)) -> User:
+    """Strictly platform_admin; None only when AUTH_DISABLED=1."""
+    settings = get_settings()
+    if settings.auth_disabled_flag:
+        return user  # type: ignore
+    if user.role != "platform_admin":
+        raise HTTPException(status_code=403, detail="Platform admin role required")
+    return user

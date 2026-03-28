@@ -11,7 +11,7 @@ from core.logging_config import configure_logging
 from db import Base, apply_schema_patches, engine
 import models  # noqa: F401  — register ORM models for metadata.create_all
 from openapi_tags import OPENAPI_TAGS
-from routers import agents, auth, billing, campaign, creatives, health, job, launch, media, usage
+from routers import admin, agents, auth, billing, campaign, creatives, health, job, launch, media, usage
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +76,7 @@ app.redoc_url = "/redoc"
 
 app.include_router(health.router, prefix="/health", tags=["health"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(admin.router, prefix="/admin", tags=["admin"])
 app.include_router(billing.router, prefix="/billing", tags=["billing"])
 app.include_router(campaign.router, prefix="/campaign", tags=["campaign"])
 app.include_router(job.router, prefix="/job", tags=["job"])
