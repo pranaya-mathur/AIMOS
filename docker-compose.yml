@@ -27,6 +27,7 @@ services:
       - ./backend:/app
       - ./scripts:/app/scripts
       - ./prompts:/app/prompts
+      - ./tests:/app/tests
 
   worker:
     build: .
@@ -44,6 +45,7 @@ services:
       - ./backend:/app
       - ./scripts:/app/scripts
       - ./prompts:/app/prompts
+      - ./tests:/app/tests
 
   beat:
     build: .
@@ -61,6 +63,7 @@ services:
       - ./backend:/app
       - ./scripts:/app/scripts
       - ./prompts:/app/prompts
+      - ./tests:/app/tests
 
   redis:
     image: redis:7-alpine

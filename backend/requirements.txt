@@ -18,3 +18,8 @@ google-ads
 tweepy
 sendgrid
 twilio
+
+pytest
+pytest-asyncio
+pytest-mock
+locust

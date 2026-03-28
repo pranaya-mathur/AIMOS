@@ -36,6 +36,9 @@ def get_current_user_optional(
 
 
 def get_current_user(user: Optional[User] = Depends(get_current_user_optional)) -> User:
+    settings = get_settings()
+    if settings.auth_disabled_flag:
+        return user  # type: ignore
     if user is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
     return user
