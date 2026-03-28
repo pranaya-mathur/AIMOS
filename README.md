@@ -11,7 +11,7 @@
 | **4 — AWS deploy** | Configure `infra/aws/terraform/terraform.tfvars`, then **`chmod +x scripts/deploy_aws.sh && ./scripts/deploy_aws.sh`** — Terraform apply → ECR push → ECS rolling restart. Outputs **ALB URL** for Bubble. |
 | **5 — Bubble** | **`docs/bubble/README.md`** + **`docs/bubble/WORKFLOWS.md`** — OpenAPI import, CORS, JWT, workflow templates. |
 
-**Utilities:** `make validate` · `make seed` · `make e2e` · `make openapi` · [`docs/BUBBLE_INTEGRATION_GUIDE.md`](docs/BUBBLE_INTEGRATION_GUIDE.md)
+**Utilities:** `make validate` · `make seed` · `make e2e` · `make openapi` · [`docs/PROMPT_CUSTOMIZATION.md`](docs/PROMPT_CUSTOMIZATION.md) · [`docs/bubble/ADVANCED_WORKFLOWS.md`](docs/bubble/ADVANCED_WORKFLOWS.md)
 
 ---
 
