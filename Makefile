@@ -1,6 +1,6 @@
 # AIMOS — convenience targets (requires Docker Compose + make)
 
-.PHONY: up down logs seed validate e2e openapi
+.PHONY: up down logs seed validate e2e openapi pilot
 
 up:
 	@chmod +x setup.sh 2>/dev/null || true
@@ -23,3 +23,7 @@ e2e:
 
 openapi:
 	python3 scripts/export_openapi.py
+
+pilot:
+	@chmod +x scripts/start_pilot.sh 2>/dev/null || true
+	./scripts/start_pilot.sh
