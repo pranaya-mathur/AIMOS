@@ -32,6 +32,7 @@ def main():
     parser.add_argument("--audience", default="Investors and 35-45yr High Net Worth Individuals", help="Target audience")
     parser.add_argument("--goal", default="Drive 100+ high-intent leads via Noida/Ggn ads", help="Campaign goal")
     parser.add_argument("--base-url", default="http://127.0.0.1:8000", help="API URL")
+    parser.add_argument("--vertical", default="Real_Estate", help="Industry vertical (Dental, SaaS, etc.)")
     args = parser.parse_args()
 
     print(f"\n{BOLD}{BLUE}🚀 AIMOS ENTERPRISE PILOT SIMULATOR{END}")
@@ -39,6 +40,7 @@ def main():
     print(f"{BOLD}Product:{END}  {args.product}")
     print(f"{BOLD}Audience:{END} {args.audience}")
     print(f"{BOLD}Goal:{END}     {args.goal}")
+    print(f"{BOLD}Vertical:{END} {args.vertical}")
     print(f"{BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{END}\n")
 
     client = httpx.Client(base_url=args.base_url, timeout=60.0)
@@ -64,7 +66,7 @@ def main():
             "product": args.product,
             "audience": args.audience,
             "goal": args.goal,
-            "industry_vertical": "Real_Estate"
+            "industry_vertical": args.vertical
         }
     }
     
