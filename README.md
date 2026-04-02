@@ -235,8 +235,8 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-  Start([Action Request]) --> CheckTier{Tier Supports Platform?}
-  CheckTier -- No --> Block([Block: "Professional Required"])
+  Start(Action Request) --> CheckTier{Tier Supports Platform?}
+  CheckTier -- No --> Block["Block: Professional Required"]
   CheckTier -- Yes --> CheckCamp[Check Monthly Campaign Count]
   CheckCamp -- Full --> Block
   CheckCamp -- OK --> CheckTok[Check Monthly Token Usage]
