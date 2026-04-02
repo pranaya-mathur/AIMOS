@@ -11,8 +11,10 @@ import {
   launchWhatsApp,
   type LaunchStatus,
 } from "@/lib/api/launch";
+import { getSubscription, type SubscriptionInfo } from "@/lib/api/billing";
 import { TaskStatusPoller } from "@/components/jobs/TaskStatusPoller";
 import { swaggerUrl } from "@/lib/services-config";
+import Link from "next/link";
 
 function inputClass() {
   return "mt-1 w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/15";
@@ -20,6 +22,7 @@ function inputClass() {
 
 export function LaunchCenter() {
   const [status, setStatus] = useState<LaunchStatus | null>(null);
+  const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
   const [taskId, setTaskId] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -29,6 +32,9 @@ export function LaunchCenter() {
       void getLaunchStatus()
         .then(setStatus)
         .catch(() => setStatus(null));
+      void getSubscription()
+        .then(setSubscription)
+        .catch(() => setSubscription(null));
     });
   }, []);
 
@@ -64,6 +70,50 @@ export function LaunchCenter() {
   const [smsTo, setSmsTo] = useState("");
   const [smsBody, setSmsBody] = useState("");
 
+  const userTier = subscription?.tier || "free";
+  const isFree = userTier === "free";
+
+  function PremiumGuard({
+    platform,
+    children,
+  }: {
+    platform: string;
+    children: React.ReactNode;
+  }) {
+    // Only Professional+ can launch to Meta, Google, Email, SMS
+    const premiumPaths = ["Meta", "Google Ads", "Email", "SMS"];
+    const isPremium = premiumPaths.includes(platform);
+
+    if (isPremium && isFree) {
+      return (
+        <div className="relative overflow-hidden rounded-2xl border border-violet-100 bg-violet-50/30 p-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-medium text-slate-800">{platform}</h3>
+            <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-violet-600">
+              Professional Plan
+            </span>
+          </div>
+          <p className="mt-2 text-sm text-slate-600">
+            Launch to {platform} is a premium feature. Upgrade your plan to unlock
+            ad networks and direct engagement.
+          </p>
+          <Link
+            href="/billing"
+            className="mt-3 inline-block text-sm font-semibold text-violet-600 hover:underline"
+          >
+            Upgrade to Professional →
+          </Link>
+        </div>
+      );
+    }
+
+    return (
+      <section className="rounded-2xl border border-slate-200 bg-white p-4">
+        {children}
+      </section>
+    );
+  }
+
   return (
     <div className="space-y-10">
       <section>
@@ -97,7 +147,7 @@ export function LaunchCenter() {
         </p>
       )}
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4">
+      <PremiumGuard platform="Meta">
         <h3 className="font-medium text-slate-800">Meta marketing</h3>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <label className="text-sm text-slate-600">
@@ -119,7 +169,7 @@ export function LaunchCenter() {
         >
           Queue Meta (async)
         </button>
-      </section>
+      </PremiumGuard>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
         <h3 className="font-medium text-slate-800">WhatsApp</h3>
@@ -155,7 +205,7 @@ export function LaunchCenter() {
         </button>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4">
+      <PremiumGuard platform="Google Ads">
         <h3 className="font-medium text-slate-800">Google Ads</h3>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <label className="text-sm text-slate-600">
@@ -190,7 +240,7 @@ export function LaunchCenter() {
         >
           Queue Google Ads (async)
         </button>
-      </section>
+      </PremiumGuard>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
         <h3 className="font-medium text-slate-800">X (Twitter)</h3>
@@ -213,7 +263,7 @@ export function LaunchCenter() {
         </button>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4">
+      <PremiumGuard platform="Email">
         <h3 className="font-medium text-slate-800">Email</h3>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <label className="text-sm text-slate-600 sm:col-span-2">
@@ -259,9 +309,9 @@ export function LaunchCenter() {
         >
           Send email (async)
         </button>
-      </section>
+      </PremiumGuard>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4">
+      <PremiumGuard platform="SMS">
         <h3 className="font-medium text-slate-800">SMS</h3>
         <label className="mt-3 block text-sm text-slate-600">
           To phone
@@ -295,7 +345,7 @@ export function LaunchCenter() {
         >
           Send SMS (async)
         </button>
-      </section>
+      </PremiumGuard>
 
       <TaskStatusPoller taskId={taskId} />
     </div>

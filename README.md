@@ -120,11 +120,13 @@ flowchart LR
     BT[Celery beat]
     R[(Redis)]
     PG[(Postgres)]
+    S[Billing Service]
+    Q[Quota Engine]
   end
 
   subgraph External
     OAI[OpenAI]
-    ST[Stripe]
+    ST[Stripe Subscriptions]
     META[Meta Marketing]
     GADS[Google Ads SDK]
     X[X/Twitter API]
@@ -138,6 +140,10 @@ flowchart LR
   CLI --> API
   API --> PG
   API --> R
+  API --> S
+  API --> Q
+  W --> S
+  W --> Q
   W --> R
   W --> PG
   BT --> R
@@ -185,32 +191,59 @@ sequenceDiagram
   participant AI as OpenAI
 
   Client->>API: POST /campaign/create (Bearer)
+  API->>Q_ENG: Quota check (campaigns + tokens)
+  Q_ENG-->>API: OK
   API->>API: persist campaign
   API->>Q: enqueue pipeline task
   API-->>Client: task_id / campaign_id
   W->>Q: claim task
-  W->>G: run graph (12 BRD nodes)
-  G->>AI: completions per node
+  loop 12-Agent Walk
+    W->>Q_ENG: Pre-step Token check
+    Note over Q_ENG: assert_can_consume_tokens
+    Q_ENG-->>W: OK
+    W->>G: run agent node (Node N)
+    G->>AI: completion call
+  end
   G-->>W: aggregated result
   Client->>API: GET /job/{task_id}
   API-->>Client: status + result when ready
 ```
 
-### Billing (Stripe)
+### Billing (Stripe Recurring Subscriptions)
 
 ```mermaid
 sequenceDiagram
   participant Client
   participant API
   participant Stripe
-  participant WH as POST /billing/stripe/webhook
+  participant WH as webhook (/stripe/webhook)
 
-  Client->>API: POST /billing/checkout/session
-  API->>Stripe: create Checkout Session
+  Client->>API: POST /billing/subscribe (Professional/Growth)
+  API->>Stripe: create Checkout Session (mode=subscription)
   API-->>Client: url
   Client->>Stripe: user pays in browser
-  Stripe->>WH: checkout.session.completed
-  WH->>WH: verify signature, set campaign paid
+  
+  Note over Stripe, WH: Asynchronous lifecycle
+  Stripe->>WH: invoice.paid
+  WH->>API: Update User (tier=growth, status=active)
+  
+  Stripe->>WH: customer.subscription.deleted
+  WH->>API: Downgrade User (tier=free, status=canceled)
+```
+
+### Quota Enforcement Logic
+
+```mermaid
+flowchart TD
+  Start([Action Request]) --> CheckTier{Tier Supports Platform?}
+  CheckTier -- No --> Block([Block: "Professional Required"])
+  CheckTier -- Yes --> CheckCamp[Check Monthly Campaign Count]
+  CheckCamp -- Full --> Block
+  CheckCamp -- OK --> CheckTok[Check Monthly Token Usage]
+  CheckTok -- Full --> Block
+  CheckTok -- OK --> RunAgent[Execute AI Task]
+  RunAgent --> Record[Record UsageEvent]
+  Record --> CheckTok
 ```
 
 ### Media job + signed webhook

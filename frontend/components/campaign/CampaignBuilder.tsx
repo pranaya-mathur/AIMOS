@@ -99,14 +99,34 @@ export function CampaignBuilder() {
           {busy ? "Generating…" : "Generate campaign"}
         </button>
         {error && (
-          <p className="text-sm text-red-600" role="alert">
-            {error}
-          </p>
+          <div className="rounded-xl bg-red-50 p-3 border border-red-100">
+            <p className="text-sm text-red-600" role="alert">
+              {error}
+            </p>
+            {error.toLowerCase().includes("quota") && (
+              <Link
+                href="/billing"
+                className="mt-2 block text-xs font-semibold text-red-700 hover:underline"
+              >
+                Upgrade your plan to increase limits →
+              </Link>
+            )}
+          </div>
         )}
         {jobState.phase === "failure" && (
-          <p className="text-sm text-red-600" role="alert">
-            {jobState.message}
-          </p>
+          <div className="rounded-xl bg-red-50 p-3 border border-red-100">
+            <p className="text-sm text-red-600" role="alert">
+              {jobState.message}
+            </p>
+            {jobState.message?.toLowerCase().includes("quota") && (
+              <Link
+                href="/billing"
+                className="mt-2 block text-xs font-semibold text-red-700 hover:underline"
+              >
+                Increase your token quota →
+              </Link>
+            )}
+          </div>
         )}
         {jobState.phase === "polling" && (
           <p className="text-sm text-amber-600">Pipeline running…</p>
