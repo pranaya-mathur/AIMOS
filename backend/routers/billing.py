@@ -7,11 +7,16 @@ from sqlalchemy.orm import Session
 
 from core.config import get_settings
 from db import get_db
-from deps import get_agency_user
+from deps import get_agency_user, get_current_user
 from models import Campaign, User
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# One-time Checkout (existing — unchanged)
+# ---------------------------------------------------------------------------
 
 
 class CheckoutSessionBody(BaseModel):
@@ -85,12 +90,92 @@ def create_checkout_session(
     }
 
 
+# ---------------------------------------------------------------------------
+# Recurring Subscription Endpoints
+# ---------------------------------------------------------------------------
+
+
+class SubscribeBody(BaseModel):
+    """Create a Stripe Subscription checkout for a recurring tier."""
+
+    price_id: str = Field(..., description="Stripe recurring Price ID (price_xxx)")
+    success_url: HttpUrl = Field(..., description="Redirect after subscription checkout completes")
+    cancel_url: HttpUrl = Field(..., description="Redirect if user cancels")
+
+
+@router.post("/subscribe")
+def subscribe(
+    body: SubscribeBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """
+    Create a Stripe Checkout Session in **subscription** mode.
+    Returns `{url}` to redirect the user to Stripe's hosted checkout page.
+    """
+    settings = get_settings()
+    if not settings.stripe_secret_key:
+        raise HTTPException(status_code=503, detail="Stripe not configured")
+
+    from services.billing.subscription import create_subscription_checkout
+
+    result = create_subscription_checkout(
+        db,
+        user,
+        price_id=body.price_id,
+        success_url=str(body.success_url),
+        cancel_url=str(body.cancel_url),
+    )
+    return result
+
+
+@router.get("/subscription")
+def get_subscription(
+    user: User = Depends(get_current_user),
+):
+    """Return the current user's subscription tier, status, and quotas."""
+    from services.billing.subscription import get_subscription_info
+
+    return get_subscription_info(user)
+
+
+class PortalBody(BaseModel):
+    return_url: HttpUrl = Field(..., description="URL to return to after portal session")
+
+
+@router.post("/portal")
+def create_portal(
+    body: PortalBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """
+    Create a Stripe Billing Portal session for self-service subscription management.
+    Returns `{url}`.
+    """
+    settings = get_settings()
+    if not settings.stripe_secret_key:
+        raise HTTPException(status_code=503, detail="Stripe not configured")
+
+    from services.billing.subscription import create_billing_portal_session
+
+    if not user.stripe_customer_id:
+        raise HTTPException(status_code=400, detail="No active subscription to manage")
+
+    return create_billing_portal_session(db, user, str(body.return_url))
+
+
+# ---------------------------------------------------------------------------
+# Stripe Webhook (unified — handles both one-time & subscription events)
+# ---------------------------------------------------------------------------
+
+
 @router.post("/stripe/webhook")
 async def stripe_webhook(
     request: Request,
     stripe_signature: Optional[str] = Header(default=None, alias="stripe-signature"),
 ):
-    """Stripe sends raw body; verify signature and update campaign payment state."""
+    """Stripe sends raw body; verify signature and route event to the appropriate handler."""
     settings = get_settings()
     if not settings.stripe_webhook_secret or not settings.stripe_secret_key:
         raise HTTPException(status_code=503, detail="Stripe not configured")
@@ -118,18 +203,27 @@ async def stripe_webhook(
         raise HTTPException(status_code=400, detail="Invalid signature") from exc
 
     from db import SessionLocal
-    from models import Campaign
+    from models import Campaign, User
+    from services.billing.subscription import (
+        handle_invoice_paid,
+        handle_subscription_deleted,
+        handle_subscription_updated,
+    )
 
-    if event["type"] == "checkout.session.completed":
-        session = event["data"]["object"]
-        metadata = session.get("metadata", {})
-        campaign_id = metadata.get("campaign_id")
-        user_id = metadata.get("user_id")
-        price_id = metadata.get("price_id")
+    event_type = event.get("type", "")
+    event_data = event.get("data", {})
 
-        db = SessionLocal()
-        try:
-            # 1. Update Campaign (if applicable)
+    db = SessionLocal()
+    try:
+        # ── One-time checkout completion (existing logic) ──
+        if event_type == "checkout.session.completed":
+            session = event_data.get("object", {})
+            metadata = session.get("metadata", {})
+            campaign_id = metadata.get("campaign_id")
+            user_id = metadata.get("user_id")
+            price_id = metadata.get("price_id")
+
+            # Campaign payment flow
             if campaign_id:
                 row = db.query(Campaign).filter(Campaign.id == campaign_id).first()
                 if row:
@@ -138,8 +232,8 @@ async def stripe_webhook(
                     db.commit()
                     logger.info("campaign %s marked paid via Stripe", campaign_id)
 
-            # 2. Update User Quotas (if applicable)
-            if user_id:
+            # Legacy quota update via checkout (one-time)
+            if user_id and not session.get("subscription"):
                 u_row = db.query(User).filter(User.id == user_id).first()
                 if u_row:
                     c_quota, t_quota = settings.get_quotas_for_price(price_id)
@@ -147,7 +241,21 @@ async def stripe_webhook(
                     u_row.monthly_token_quota = t_quota
                     db.commit()
                     logger.info("user %s quotas updated via price %s", user_id, price_id)
-        finally:
-            db.close()
 
-    return {"received": True, "type": event.get("type")}
+        # ── Recurring subscription events ──
+        elif event_type == "invoice.paid":
+            handle_invoice_paid(db, event_data)
+
+        elif event_type == "customer.subscription.updated":
+            handle_subscription_updated(db, event_data)
+
+        elif event_type == "customer.subscription.deleted":
+            handle_subscription_deleted(db, event_data)
+
+        else:
+            logger.debug("stripe_webhook: unhandled event_type=%s", event_type)
+
+    finally:
+        db.close()
+
+    return {"received": True, "type": event_type}

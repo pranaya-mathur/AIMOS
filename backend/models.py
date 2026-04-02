@@ -26,6 +26,11 @@ class User(Base):
     full_name = Column(String, nullable=True)
     organization_id = Column(String, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    # Subscription billing
+    subscription_tier = Column(String, nullable=False, default="free", server_default="free", index=True)
+    subscription_status = Column(String, nullable=False, default="none", server_default="none", index=True)
+    stripe_customer_id = Column(String, nullable=True, unique=True, index=True)
+    stripe_subscription_id = Column(String, nullable=True, unique=True, index=True)
     # Per-user overrides: NULL → server default from env; -1 → unlimited for that dimension.
     monthly_campaign_quota = Column(Integer, nullable=True)
     monthly_token_quota = Column(Integer, nullable=True)

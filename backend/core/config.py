@@ -10,6 +10,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 _BACKEND_DIR = Path(__file__).resolve().parent.parent
 _REPO_ROOT = _BACKEND_DIR.parent
 
+# Tier → (monthly_campaign_quota, monthly_token_quota).  -1 = unlimited.
+TIER_QUOTA_MAP: dict[str, tuple[int, int]] = {
+    "free": (5, 500_000),
+    "professional": (50, 5_000_000),
+    "growth": (200, 25_000_000),
+    "enterprise": (-1, -1),
+}
+
 
 class Settings(BaseSettings):
     """Validated environment configuration (fail fast at startup)."""
@@ -33,6 +41,10 @@ class Settings(BaseSettings):
     stripe_secret_key: Optional[str] = None
     stripe_webhook_secret: Optional[str] = None
     stripe_default_price_id: Optional[str] = Field(default=None, validation_alias="STRIPE_DEFAULT_PRICE_ID")
+    # Recurring subscription Price IDs (create in Stripe Dashboard)
+    stripe_price_professional: Optional[str] = Field(default=None, validation_alias="STRIPE_PRICE_PROFESSIONAL")
+    stripe_price_growth: Optional[str] = Field(default=None, validation_alias="STRIPE_PRICE_GROWTH")
+    stripe_price_enterprise: Optional[str] = Field(default=None, validation_alias="STRIPE_PRICE_ENTERPRISE")
     cors_origins: Optional[str] = Field(default=None, validation_alias="CORS_ORIGINS")
     public_api_base_url: Optional[str] = Field(default=None, validation_alias="PUBLIC_API_BASE_URL")
     # Per-user defaults (User.monthly_* overrides). -1 = unlimited for that dimension.
@@ -54,27 +66,43 @@ class Settings(BaseSettings):
             return False
         return str(v).lower() in ("1", "true", "yes")
 
+    @property
+    def price_to_tier_map(self) -> dict[str, str]:
+        """Build reverse lookup: Stripe Price ID → tier slug."""
+        m: dict[str, str] = {}
+        if self.stripe_price_professional:
+            m[self.stripe_price_professional] = "professional"
+        if self.stripe_price_growth:
+            m[self.stripe_price_growth] = "growth"
+        if self.stripe_price_enterprise:
+            m[self.stripe_price_enterprise] = "enterprise"
+        return m
+
+    def get_tier_for_price(self, price_id: Optional[str]) -> str:
+        """Resolve a Stripe Price ID to a tier slug."""
+        if not price_id:
+            return "free"
+        # Exact match first
+        tier = self.price_to_tier_map.get(price_id)
+        if tier:
+            return tier
+        # Fallback: substring match for compatibility
+        p = price_id.lower()
+        if "enterprise" in p:
+            return "enterprise"
+        if "growth" in p:
+            return "growth"
+        if "professional" in p or "pro" in p:
+            return "professional"
+        return "free"
+
     def get_quotas_for_price(self, price_id: Optional[str]) -> tuple[int, int]:
         """
         Maps a Stripe Price ID to (campaign_quota, token_quota).
         Returns defaults if price_id is None or unknown.
         """
-        if not price_id:
-            return self.default_monthly_campaign_quota, self.default_monthly_token_quota
-
-        # Example placeholder logic:
-        # If 'enterprise' is in the ID, give unlimited.
-        # If 'starter' is in the ID, give lower limits.
-        p = price_id.lower()
-        if "enterprise" in p:
-            return -1, -1  # Unlimited
-        if "starter" in p:
-            return 5, 500_000
-        if "pro" in p:
-            return 100, 10_000_000
-
-        # Fallback to defaults
-        return self.default_monthly_campaign_quota, self.default_monthly_token_quota
+        tier = self.get_tier_for_price(price_id)
+        return TIER_QUOTA_MAP.get(tier, (self.default_monthly_campaign_quota, self.default_monthly_token_quota))
 
     @property
     def auth_disabled_flag(self) -> bool:

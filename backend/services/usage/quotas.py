@@ -8,7 +8,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from typing import Optional, Union, Tuple
-from core.config import Settings, get_settings
+from core.config import TIER_QUOTA_MAP, Settings, get_settings
 from models import Campaign, UsageEvent, User
 from services.usage.exceptions import QuotaExceededError
 
@@ -29,14 +29,32 @@ def _is_unlimited(value: Optional[int]) -> bool:
     return value is not None and value < 0
 
 
+def _tier_quota(user: Optional[User], idx: int) -> Optional[int]:
+    """Resolve quota from subscription_tier (0 = campaigns, 1 = tokens). Returns None = unlimited."""
+    if not user:
+        return None
+    tier = getattr(user, "subscription_tier", None) or "free"
+    quotas = TIER_QUOTA_MAP.get(tier)
+    if quotas:
+        val = quotas[idx]
+        return None if val < 0 else val
+    return None
+
+
 def effective_campaign_quota(user: Optional[User], settings: Optional[Settings] = None) -> Optional[int]:
     """None = no limit."""
     settings = settings or get_settings()
     if user and user.role == "platform_admin":
         return None
+    # 1. Per-user override takes highest priority
     override = user.monthly_campaign_quota if user else None
     if override is not None:
         return None if _is_unlimited(override) else override
+    # 2. Subscription tier
+    tier_val = _tier_quota(user, 0)
+    if tier_val is not None:
+        return tier_val
+    # 3. Server default
     d = settings.default_monthly_campaign_quota
     return None if _is_unlimited(d) else d
 
@@ -48,6 +66,9 @@ def effective_token_quota(user: Optional[User], settings: Optional[Settings] = N
     override = user.monthly_token_quota if user else None
     if override is not None:
         return None if _is_unlimited(override) else override
+    tier_val = _tier_quota(user, 1)
+    if tier_val is not None:
+        return tier_val
     d = settings.default_monthly_token_quota
     return None if _is_unlimited(d) else d
 

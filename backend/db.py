@@ -26,6 +26,11 @@ def apply_schema_patches() -> None:
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS monthly_token_quota INTEGER",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS organization_id VARCHAR REFERENCES organizations(id) ON DELETE SET NULL",
         "ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS organization_id VARCHAR REFERENCES organizations(id) ON DELETE SET NULL",
+        # Subscription billing columns
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_tier VARCHAR NOT NULL DEFAULT 'free'",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status VARCHAR NOT NULL DEFAULT 'none'",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR UNIQUE",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR UNIQUE",
     ]
     with engine.begin() as conn:
         for sql in stmts:
