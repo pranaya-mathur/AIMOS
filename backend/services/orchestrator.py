@@ -1,5 +1,7 @@
-
 from langgraph.graph import StateGraph
+from sqlalchemy.orm import Session
+from db import SessionLocal
+from services.usage.quotas import assert_can_consume_tokens
 from services.agents import (
     analytics_engine_agent,
     brand_builder_agent,
@@ -34,11 +36,31 @@ AGENT_ORDER = [
 AGENT_RUNNERS = {name: runner for name, runner in AGENT_ORDER}
 
 
-def build():
+def enforce_quota_wrapper(runner, user_id: str):
+    """
+    Middleware-like wrapper to check token quota before each agent execution.
+    Fails the campaign in real-time if the cap is already reached.
+    """
+    def wrapped(state: dict):
+        if not user_id:
+            return runner(state)
+        
+        db = SessionLocal()
+        try:
+            assert_can_consume_tokens(db, user_id)
+        finally:
+            db.close()
+        return runner(state)
+    return wrapped
+
+
+def build(user_id: Optional[str] = None):
     g = StateGraph(dict)
 
     for agent_name, runner in AGENT_ORDER:
-        g.add_node(agent_name, runner)
+        # Wrap runner with real-time quota validator
+        node_func = enforce_quota_wrapper(runner, user_id) if user_id else runner
+        g.add_node(agent_name, node_func)
 
     g.set_entry_point(AGENT_ORDER[0][0])
     for idx in range(len(AGENT_ORDER) - 1):
@@ -47,8 +69,8 @@ def build():
     return g.compile()
 
 
-def run_agents(data):
-    return build().invoke({"input": data, "agent_outputs": {}})
+def run_agents(data, user_id: Optional[str] = None):
+    return build(user_id).invoke({"input": data, "agent_outputs": {}})
 
 
 def run_single_agent(agent_name: str, data: dict):

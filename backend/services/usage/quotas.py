@@ -118,14 +118,34 @@ def sum_cost_usd_this_month(db: Session, user_id: str) -> Decimal:
 
 
 def assert_can_create_campaign(db: Session, user: User) -> None:
+    # 1. Check campaign count quota
     limit = effective_campaign_quota(user)
-    if limit is None:
+    if limit is not None:
+        used = count_campaigns_this_month(db, user.id)
+        if used >= limit:
+            raise QuotaExceededError(
+                f"Monthly campaign quota reached ({used}/{limit} this UTC month).",
+                code="campaign_quota",
+            )
+    # 2. Check token quota — don't start new work if already exhausted
+    assert_can_consume_tokens(db, user.id)
+
+
+def assert_tier_supports_platform(user: User, platform: str) -> None:
+    """
+    Gate launch targets (Meta, Google Ads) to Professional+ tiers.
+    Free tier is restricted to Social (X) and WhatsApp.
+    """
+    tier = getattr(user, "subscription_tier", "free") or "free"
+    # Basic platforms allowed for everyone
+    if platform.lower() in ("social_x", "whatsapp", "social"):
         return
-    used = count_campaigns_this_month(db, user.id)
-    if used >= limit:
+
+    # Premium platforms (Ad Networks)
+    if tier == "free":
         raise QuotaExceededError(
-            f"Monthly campaign quota reached ({used}/{limit} this UTC month).",
-            code="campaign_quota",
+            f"Launch to '{platform}' requires a Professional subscription. Your current tier is 'Free'.",
+            code="tier_restriction",
         )
 
 

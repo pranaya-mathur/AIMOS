@@ -86,7 +86,7 @@ def run_campaign(data):
     try:
         set_usage_context(user_id=ctx_user_id, campaign_id=campaign_id)
         # result is the Graph State at the end of the 12-agent walk
-        result = run_agents(inner)
+        result = run_agents(inner, user_id=ctx_user_id)
     except Exception:
         if campaign_id:
             db = SessionLocal()

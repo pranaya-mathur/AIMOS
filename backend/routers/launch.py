@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from deps import get_agency_user
 from models import User
+from services.usage.quotas import assert_tier_supports_platform
 from services.integrations.google_ads import GoogleAdsError, create_campaign
 from services.integrations.social_x import XApiError, post_tweet
 from services.integrations.engagement_email import EmailError, send_email
@@ -71,7 +72,8 @@ def launch_meta(
     body: MetaLaunchBody,
     user: Optional[User] = Depends(get_agency_user),
 ):
-    del user
+    if user:
+        assert_tier_supports_platform(user, "meta")
     payload = body.model_dump(exclude={"async_job"})
     if body.async_job:
         task = launch_meta_campaign_task.delay(payload)
@@ -87,7 +89,8 @@ def launch_whatsapp(
     body: WhatsAppBody,
     user: Optional[User] = Depends(get_agency_user),
 ):
-    del user
+    if user:
+        assert_tier_supports_platform(user, "whatsapp")
     if body.async_job:
         task = send_whatsapp_task.delay(body.to_e164, body.body)
         return {"task_id": task.id, "mode": "async"}
@@ -102,7 +105,8 @@ def launch_google(
     body: GoogleAdsBody,
     user: Optional[User] = Depends(get_agency_user),
 ):
-    del user
+    if user:
+        assert_tier_supports_platform(user, "google")
     if body.async_job:
         task = send_google_ads_task.delay(body.campaign_name, body.customer_id)
         return {"task_id": task.id, "mode": "async"}
@@ -123,7 +127,8 @@ def launch_social(
     body: SocialBody,
     user: Optional[User] = Depends(get_agency_user),
 ):
-    del user
+    if user:
+        assert_tier_supports_platform(user, "social_x")
     if body.async_job:
         task = post_social_task.delay(body.text)
         return {"task_id": task.id, "mode": "async"}
@@ -138,7 +143,8 @@ def launch_email(
     body: EmailBody,
     user: Optional[User] = Depends(get_agency_user),
 ):
-    del user
+    if user:
+        assert_tier_supports_platform(user, "email")
     if body.async_job:
         task = send_engagement_email_task.delay(body.to_email, body.subject, body.body)
         return {"task_id": task.id, "mode": "async"}
@@ -153,7 +159,8 @@ def launch_sms(
     body: SmsBody,
     user: Optional[User] = Depends(get_agency_user),
 ):
-    del user
+    if user:
+        assert_tier_supports_platform(user, "sms")
     if body.async_job:
         task = send_engagement_sms_task.delay(body.to_phone, body.body)
         return {"task_id": task.id, "mode": "async"}
