@@ -1,6 +1,7 @@
+from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -53,7 +54,7 @@ class Settings(BaseSettings):
             return False
         return str(v).lower() in ("1", "true", "yes")
 
-    def get_quotas_for_price(self, price_id: str | None) -> tuple[int, int]:
+    def get_quotas_for_price(self, price_id: Optional[str]) -> tuple[int, int]:
         """
         Maps a Stripe Price ID to (campaign_quota, token_quota).
         Returns defaults if price_id is None or unknown.

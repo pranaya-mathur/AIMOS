@@ -7,12 +7,13 @@ from decimal import Decimal
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from typing import Optional, Union, Tuple
 from core.config import Settings, get_settings
 from models import Campaign, UsageEvent, User
 from services.usage.exceptions import QuotaExceededError
 
 
-def _utc_month_bounds(now: datetime | None = None) -> tuple[datetime, datetime]:
+def _utc_month_bounds(now: Optional[datetime] = None) -> Tuple[datetime, datetime]:
     dt = now or datetime.now(timezone.utc)
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
@@ -24,11 +25,11 @@ def _utc_month_bounds(now: datetime | None = None) -> tuple[datetime, datetime]:
     return start, end
 
 
-def _is_unlimited(value: int | None) -> bool:
+def _is_unlimited(value: Optional[int]) -> bool:
     return value is not None and value < 0
 
 
-def effective_campaign_quota(user: User | None, settings: Settings | None = None) -> int | None:
+def effective_campaign_quota(user: Optional[User], settings: Optional[Settings] = None) -> Optional[int]:
     """None = no limit."""
     settings = settings or get_settings()
     if user and user.role == "platform_admin":
@@ -40,7 +41,7 @@ def effective_campaign_quota(user: User | None, settings: Settings | None = None
     return None if _is_unlimited(d) else d
 
 
-def effective_token_quota(user: User | None, settings: Settings | None = None) -> int | None:
+def effective_token_quota(user: Optional[User], settings: Optional[Settings] = None) -> Optional[int]:
     settings = settings or get_settings()
     if user and user.role == "platform_admin":
         return None
@@ -125,7 +126,7 @@ def compute_openai_cost_usd(
     *,
     prompt_tokens: int,
     completion_tokens: int,
-    settings: Settings | None = None,
+    settings: Optional[Settings] = None,
 ) -> Decimal:
     settings = settings or get_settings()
     inp = Decimal(str(settings.openai_input_usd_per_million_tokens)) * Decimal(prompt_tokens) / Decimal(1_000_000)
@@ -138,9 +139,9 @@ def compute_openai_cost_usd(
 def record_openai_usage(
     db: Session,
     *,
-    user_id: str | None,
-    campaign_id: str | None,
-    model: str | None,
+    user_id: Optional[str],
+    campaign_id: Optional[str],
+    model: Optional[str],
     prompt_tokens: int,
     completion_tokens: int,
     total_tokens: int,

@@ -4,7 +4,7 @@ import logging
 import os
 import time
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Optional, Union, Any
 
 import httpx
 
@@ -44,7 +44,7 @@ def _poll_until_complete(*, status_url: str, headers: dict, timeout_sec: int = 1
     raise MediaProviderError("Timed out while waiting for media provider job completion.")
 
 
-def _request_with_retry(method: str, url: str, *, headers: dict, json_payload: dict | None = None, max_attempts: int = 4):
+def _request_with_retry(method: str, url: str, *, headers: dict, json_payload: Optional[dict] = None, max_attempts: int = 4):
     backoff = 1.0
     last_error = None
     with httpx.Client(timeout=30.0) as client:
@@ -117,7 +117,7 @@ def _build_elevenlabs_payload(payload: dict) -> dict:
     return normalized
 
 
-def _wait_for_webhook_or_poll(*, provider: str, request_id: str | None, status_url: str, headers: dict):
+def _wait_for_webhook_or_poll(*, provider: str, request_id: Optional[str], status_url: str, headers: dict):
     started = time.time()
     timeout_sec = 180
     while time.time() - started < timeout_sec:
@@ -191,7 +191,7 @@ _SPECS: dict[str, MediaProviderSpec] = {
 }
 
 
-def _run_media(spec: MediaProviderSpec, payload: dict, request_id: str | None) -> dict:
+def _run_media(spec: MediaProviderSpec, payload: dict, request_id: Optional[str]) -> dict:
     settings = get_settings()
     base_url = os.getenv(spec.base_url_env, spec.default_base).rstrip("/")
 
@@ -223,13 +223,13 @@ def _run_media(spec: MediaProviderSpec, payload: dict, request_id: str | None) -
     return _normalize_response(spec.name, result)
 
 
-def create_adcreative(payload: dict, request_id: str | None = None) -> dict:
+def create_adcreative(payload: dict, request_id: Optional[str] = None) -> dict:
     return _run_media(_SPECS["adcreative"], payload, request_id)
 
 
-def create_pictory_video(payload: dict, request_id: str | None = None) -> dict:
+def create_pictory_video(payload: dict, request_id: Optional[str] = None) -> dict:
     return _run_media(_SPECS["pictory"], payload, request_id)
 
 
-def create_elevenlabs_voiceover(payload: dict, request_id: str | None = None) -> dict:
+def create_elevenlabs_voiceover(payload: dict, request_id: Optional[str] = None) -> dict:
     return _run_media(_SPECS["elevenlabs"], payload, request_id)

@@ -32,7 +32,7 @@ class User(Base):
 
 
 class Campaign(Base):
-    """Lifecycle: draft → pending_approval → pending_payment → paid → active → completed | failed."""
+    """Lifecycle: draft → pending_approval → pending_payment → paid → active → completed | failed | rejected."""
 
     __tablename__ = "campaigns"
 

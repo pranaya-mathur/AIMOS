@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Optional
 import os
 import uuid
 
@@ -65,7 +66,7 @@ def create_elevenlabs(payload: MediaRequest, db: Session = Depends(get_db)):
 async def media_webhook(
     provider: str,
     request: Request,
-    x_webhook_token: str | None = Header(default=None),
+    x_webhook_token: Optional[str] = Header(default=None),
 ):
     raw_body = await request.body()
     try:

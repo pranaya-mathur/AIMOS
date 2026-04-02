@@ -15,6 +15,36 @@ from tasks import run_campaign
 router = APIRouter()
 
 
+@router.get("")
+def list_campaigns(
+    db: Session = Depends(get_db),
+    user: Optional[User] = Depends(get_agency_user),
+    limit: int = 20,
+):
+    """Recent campaigns for the current user / org (or all when AUTH_DISABLED)."""
+    cap = max(1, min(limit, 100))
+    q = db.query(Campaign).order_by(Campaign.created_at.desc())
+    if user is None:
+        rows = q.limit(cap).all()
+    elif user.role == "platform_admin":
+        rows = q.limit(cap).all()
+    elif user.organization_id:
+        rows = (
+            q.filter(Campaign.organization_id == user.organization_id).limit(cap).all()
+        )
+    else:
+        rows = q.filter(Campaign.user_id == user.id).limit(cap).all()
+    return [
+        {
+            "id": r.id,
+            "name": r.name,
+            "status": r.status,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+        }
+        for r in rows
+    ]
+
+
 class CreateCampaignBody(BaseModel):
     name: Optional[str] = None
     input: dict = Field(default_factory=dict)  # campaign brief / requirements
@@ -91,8 +121,40 @@ _ALLOWED_CAMPAIGN_STATUS = frozenset(
         "paused",
         "completed",
         "failed",
+        "rejected",
     }
 )
+
+
+@router.post("/{campaign_id}/rerun")
+def rerun_campaign(
+    campaign_id: str,
+    db: Session = Depends(get_db),
+    user: Optional[User] = Depends(get_agency_user),
+):
+    """Re-queue the 12-agent pipeline with the same stored `input` (clears prior output)."""
+    row = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    if user and user.role != "platform_admin":
+        if row.organization_id:
+            if row.organization_id != user.organization_id:
+                raise HTTPException(status_code=403, detail="Forbidden: Organization mismatch")
+        elif row.user_id and row.user_id != user.id:
+            raise HTTPException(status_code=403, detail="Forbidden: Ownership mismatch")
+    if row.status == "processing":
+        raise HTTPException(
+            status_code=409,
+            detail="Campaign is already processing; wait for the current job to finish.",
+        )
+    inner = row.input if isinstance(row.input, dict) else {}
+    row.output = None
+    row.status = "processing"
+    db.commit()
+    task = run_campaign.delay({"campaign_id": row.id, "input": inner})
+    row.celery_task_id = task.id
+    db.commit()
+    return {"task_id": task.id, "campaign_id": row.id}
 
 
 @router.patch("/{campaign_id}")

@@ -39,6 +39,7 @@ AI Marketing Operating System — **FastAPI** backend with JWT auth, Stripe bill
 | `docs/bubble/` | **Bubble kit** — OpenAPI export, CORS/auth notes, workflow templates (`README.md`, `WORKFLOWS.md`). |
 | `infra/aws/terraform/` | **AWS (Terraform)** — VPC, RDS Postgres, ElastiCache Redis, ECR, ECS Fargate (api / worker / beat), ALB, Secrets Manager. See `infra/aws/terraform/README.md`. |
 | `docs/` | **Product & architecture** — `PRODUCT_ARCHITECTURE.md`; **E2E** — `E2E_TESTING.md` (expected campaign test output). |
+| `frontend/` | **Control Tower** — Campaigns, analytics, billing, **Services** hub, **Launch** (`/launch` — `GET /launch/status` + channel forms + job poll), **Media studio** (`/media-studio` — AdCreative/Pictory/ElevenLabs enqueue), **Settings** (`/auth/me`). Env: `NEXT_PUBLIC_API_URL`, integration keys on API. Run: `npm run dev` / `npm run build`. |
 | Root | `Dockerfile`, `docker-compose.yml`, `.env.example`. |
 
 Agent **code** stays thin (`services/agents/*.py`); **wording and schemas** live under `prompts/agents/`.
@@ -51,9 +52,10 @@ Agent **code** stays thin (`services/agents/*.py`); **wording and schemas** live
 2. **Configure environment**
    - Copy `.env.example` to `.env` in the project root. Settings resolve `backend/.env` then **repo root `.env`** (later wins); running `uvicorn` from `backend/` still loads the root file.
    - Set at minimum: `DATABASE_URL`, `REDIS_URL`, `OPENAI_API_KEY`, `JWT_SECRET`.
-   - For the default `docker-compose` Postgres, you can use:
-     - `DATABASE_URL=postgresql://user:password@db:5432/aimos`
-     - `REDIS_URL=redis://redis:6379/0`
+   - For the default `docker-compose` Postgres/Redis (ports **5432** / **6380→6379** published to your machine), use in `.env`:
+     - `DATABASE_URL=postgresql://user:password@localhost:5432/aimos`
+     - `REDIS_URL=redis://localhost:6380/0` (container-to-container still uses hostname `redis` on 6379)
+   - **Note:** `docker-compose.yml` sets `DATABASE_URL` / `REDIS_URL` to `db` and `redis` **inside** the api/worker/beat containers so a mistaken `localhost` URL cannot break Docker startup.
 3. **Run the stack**
 
    ```bash

@@ -1,5 +1,6 @@
 
 import logging
+from typing import Optional, Union
 
 import uuid
 from celery_app import celery
@@ -26,7 +27,7 @@ _MEDIA_DISPATCH = {
 }
 
 
-def _with_request_metadata(data: dict | None, request_id: str | None) -> dict:
+def _with_request_metadata(data: Optional[dict], request_id: Optional[str]) -> dict:
     payload = dict(data or {})
     payload.setdefault("metadata", {})
     if request_id:
@@ -182,7 +183,7 @@ def send_engagement_sms_task(to_phone: str, body: str):
 
 
 @celery.task
-def generate_variation(brief: str, index: int, user_id: str | None = None):
+def generate_variation(brief: str, index: int, user_id: Optional[str] = None):
     from services.integrations.openai_service import generate_text
 
     try:

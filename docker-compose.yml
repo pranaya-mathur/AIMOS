@@ -6,6 +6,10 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    # Inside containers, never use localhost for Postgres/Redis — use service names.
+    environment:
+      DATABASE_URL: postgresql://user:password@db:5432/aimos
+      REDIS_URL: redis://redis:6379/0
     depends_on:
       db:
         condition: service_healthy
@@ -34,6 +38,9 @@ services:
     command: celery -A celery_app.celery worker --loglevel=info
     env_file:
       - .env
+    environment:
+      DATABASE_URL: postgresql://user:password@db:5432/aimos
+      REDIS_URL: redis://redis:6379/0
     depends_on:
       api:
         condition: service_healthy
@@ -52,6 +59,9 @@ services:
     command: celery -A celery_app.celery beat --loglevel=info
     env_file:
       - .env
+    environment:
+      DATABASE_URL: postgresql://user:password@db:5432/aimos
+      REDIS_URL: redis://redis:6379/0
     depends_on:
       api:
         condition: service_healthy
@@ -67,6 +77,9 @@ services:
 
   redis:
     image: redis:7-alpine
+    # Host 6380 avoids conflict when another Redis already uses 6379 on your machine.
+    ports:
+      - "6380:6379"
 
   db:
     image: postgres:15-alpine
@@ -74,6 +87,8 @@ services:
       POSTGRES_DB: aimos
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U user -d aimos"]
       interval: 3s
