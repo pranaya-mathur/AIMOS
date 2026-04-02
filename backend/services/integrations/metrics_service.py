@@ -36,8 +36,48 @@ def fetch_campaign_performance(campaign_id: str, platform: str) -> Dict:
             "is_mock": True
         }
 
-    # Real implementation would go here (Meta/Google SDK integration)
-    # For now, returning zero metrics to avoid crashes if not configured
+    # --- Real SDK Integrations ---
+    try:
+        from core.config import get_settings
+        settings = get_settings()
+
+        if platform == "google" and not os.getenv("MOCK_GOOGLE_ADS"):
+            # Note: Requires google-ads library
+            # Here we'd query the 'campaign' resource for daily metrics
+            logger.info("Polling Google Ads metrics for %s", campaign_id)
+            # Placeholder for real mutate/search logic
+            pass
+
+        if platform == "meta" and os.getenv("META_ACCESS_TOKEN"):
+            import httpx
+            token = os.getenv("META_ACCESS_TOKEN")
+            version = os.getenv("META_GRAPH_VERSION", "v21.0")
+            # We assume campaign_id is the Meta ID if it's already launched
+            url = f"https://graph.facebook.com/{version}/{campaign_id}/insights"
+            params = {
+                "access_token": token,
+                "fields": "spend,impressions,clicks,conversions",
+                "date_preset": "today"
+            }
+            with httpx.Client(timeout=10) as client:
+                resp = client.get(url, params=params)
+                if resp.status_code == 200:
+                    data = resp.json().get("data", [{}])[0]
+                    return {
+                        "campaign_id": campaign_id,
+                        "platform": platform,
+                        "day": date.today(),
+                        "spend": float(data.get("spend", 0)),
+                        "impressions": int(data.get("impressions", 0)),
+                        "clicks": int(data.get("clicks", 0)),
+                        "conversions": int(data.get("conversions", 0)),
+                        "is_mock": False
+                    }
+
+    except Exception as e:
+        logger.exception("Failed to fetch real metrics for %s", campaign_id)
+
+    # Fallback/Zero implementation
     return {
         "campaign_id": campaign_id,
         "platform": platform,

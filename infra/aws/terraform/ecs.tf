@@ -112,8 +112,12 @@ resource "aws_ecs_service" "api" {
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.api.arn
   desired_count   = 1
-  launch_type     = "FARGATE"
-  platform_version = "LATEST"
+  
+  capacity_provider_strategy {
+    capacity_provider = "FARGATE"
+    weight            = 1
+    base              = 1
+  }
 
   network_configuration {
     subnets          = aws_subnet.private[*].id
@@ -138,8 +142,11 @@ resource "aws_ecs_service" "worker" {
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.worker.arn
   desired_count   = 1
-  launch_type     = "FARGATE"
-  platform_version = "LATEST"
+
+  capacity_provider_strategy {
+    capacity_provider = "FARGATE_SPOT"
+    weight            = 1
+  }
 
   network_configuration {
     subnets          = aws_subnet.private[*].id
@@ -156,8 +163,11 @@ resource "aws_ecs_service" "beat" {
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.beat.arn
   desired_count   = 1
-  launch_type     = "FARGATE"
-  platform_version = "LATEST"
+
+  capacity_provider_strategy {
+    capacity_provider = "FARGATE_SPOT"
+    weight            = 1
+  }
 
   network_configuration {
     subnets          = aws_subnet.private[*].id

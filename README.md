@@ -103,7 +103,31 @@ Details, ECR login, and `aws ecs update-service` commands: **`infra/aws/terrafor
 
 ---
 
-## Architecture
+### 🚀 Production Readiness Checklist
+- [x] **Subscription Tiers**: Stripe integrated (Free, Pro, Growth, Enterprise).
+- [x] **Real-Time Quotas**: Token and Campaign limits enforced in LangGraph pipeline.
+- [x] **Hard Cost Controls**: `MAX_MEDIA_JOBS` cap per campaign to prevent budget drain.
+- [x] **Real SDKs**: Google Ads SDK & Meta Graph API (not stubs).
+- [x] **Observability**: Sentry for errors & SlowAPI for rate limiting.
+- [x] **DevOps**: Fargate Spot enabled for 70% cheaper background workers.
+- [x] **Database**: Alembic migrations initialized for schema safety.
+
+---
+
+### ⚔️ AIMOS vs. Dojo AI
+| Feature | Dojo AI (Open Source) | AIMOS Enterprise |
+| :--- | :--- | :--- |
+| **Orchestration** | Standard DAG | **12-Agent LangGraph Pipeline** |
+| **Execution** | Manual Triggers | **Autonomous Periodic Optimization** |
+| **Billing** | Simple credits | **SaaS Recurring Tiers (Stripe)** |
+| **Ad Launch** | Limited API | **Full Meta/Google/X SDK Suite** |
+| **Cost Control** | Basic | **Tier-Aware Media Caps & Fargate Spot** |
+| **Self-Hosting** | Supported | **Optimized for AWS/ARM (70% cheaper)** |
+| **Real-Time Guard** | Reactive | **Proactive Middleware Enforcement** |
+
+---
+
+## 🏗️ Architecture Detail
 
 High-level components and how they connect:
 

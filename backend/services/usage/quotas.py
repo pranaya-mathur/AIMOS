@@ -30,7 +30,7 @@ def _is_unlimited(value: Optional[int]) -> bool:
 
 
 def _tier_quota(user: Optional[User], idx: int) -> Optional[int]:
-    """Resolve quota from subscription_tier (0 = campaigns, 1 = tokens). Returns None = unlimited."""
+    """Resolve quota from subscription_tier (0 = campaigns, 1 = tokens, 2 = media_jobs). Returns None = unlimited."""
     if not user:
         return None
     tier = getattr(user, "subscription_tier", None) or "free"
@@ -71,6 +71,17 @@ def effective_token_quota(user: Optional[User], settings: Optional[Settings] = N
         return tier_val
     d = settings.default_monthly_token_quota
     return None if _is_unlimited(d) else d
+
+
+def effective_media_quota(user: Optional[User], settings: Optional[Settings] = None) -> Optional[int]:
+    settings = settings or get_settings()
+    if user and user.role == "platform_admin":
+        return None
+    # Media jobs are primary tied to Tiers for cost control
+    tier_val = _tier_quota(user, 2)
+    if tier_val is not None:
+        return tier_val
+    return 10  # Fallback: 10 jobs per campaign
 
 
 def count_campaigns_this_month(db: Session, user_id: str) -> int:
@@ -129,6 +140,30 @@ def assert_can_create_campaign(db: Session, user: User) -> None:
             )
     # 2. Check token quota — don't start new work if already exhausted
     assert_can_consume_tokens(db, user.id)
+
+
+def count_media_jobs_this_campaign(db: Session, campaign_id: str) -> int:
+    from models import UsageEvent
+    return (
+        db.query(func.count(UsageEvent.id))
+        .filter(
+            UsageEvent.campaign_id == campaign_id,
+            UsageEvent.provider.in_(["adcreative", "pictory", "elevenlabs"]),
+        )
+        .scalar()
+        or 0
+    )
+
+
+def assert_can_create_media_job(db: Session, user: User, campaign_id: str) -> None:
+    limit = effective_media_quota(user)
+    if limit is not None:
+        used = count_media_jobs_this_campaign(db, campaign_id)
+        if used >= limit:
+            raise QuotaExceededError(
+                f"Media job limit reached for this campaign ({used}/{limit}). Upgrade for more assets.",
+                code="media_quota",
+            )
 
 
 def assert_tier_supports_platform(user: User, platform: str) -> None:

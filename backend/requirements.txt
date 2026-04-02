@@ -18,6 +18,10 @@ google-ads
 tweepy
 sendgrid
 twilio
+alembic
+slowapi
+sentry-sdk
+sentry-sdk[fastapi]
 
 pytest
 pytest-asyncio

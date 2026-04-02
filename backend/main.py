@@ -13,6 +13,14 @@ import models  # noqa: F401  — register ORM models for metadata.create_all
 from openapi_tags import OPENAPI_TAGS
 from routers import admin, agents, analytics, auth, billing, campaign, creatives, health, job, launch, media, usage, webhooks
 
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+limiter = Limiter(key_func=get_remote_address)
+
 logger = logging.getLogger(__name__)
 
 
@@ -20,6 +28,18 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     settings = get_settings()
     configure_logging(settings.log_level)
+    
+    # Sentry Init
+    sentry_dsn = getattr(settings, "sentry_dsn", None)
+    if sentry_dsn:
+        sentry_sdk.init(
+            dsn=sentry_dsn,
+            integrations=[FastApiIntegration()],
+            traces_sample_rate=1.0,
+            profiles_sample_rate=1.0,
+        )
+        logger.info("Sentry monitoring enabled")
+
     Base.metadata.create_all(bind=engine)
     apply_schema_patches()
     logger.info("application_startup complete")
@@ -37,6 +57,9 @@ app = FastAPI(
     openapi_tags=OPENAPI_TAGS,
     lifespan=lifespan,
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 _settings = get_settings()
 if _settings.cors_origin_list:

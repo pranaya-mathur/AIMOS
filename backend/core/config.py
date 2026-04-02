@@ -10,12 +10,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 _BACKEND_DIR = Path(__file__).resolve().parent.parent
 _REPO_ROOT = _BACKEND_DIR.parent
 
-# Tier → (monthly_campaign_quota, monthly_token_quota).  -1 = unlimited.
-TIER_QUOTA_MAP: dict[str, tuple[int, int]] = {
-    "free": (5, 500_000),
-    "professional": (50, 5_000_000),
-    "growth": (200, 25_000_000),
-    "enterprise": (-1, -1),
+# Tier → (monthly_campaign_quota, monthly_token_quota, max_media_jobs). -1 = unlimited.
+TIER_QUOTA_MAP: dict[str, tuple[int, int, int]] = {
+    "free": (5, 500_000, 2),
+    "professional": (50, 5_000_000, 10),
+    "growth": (200, 25_000_000, 50),
+    "enterprise": (-1, -1, -1),
 }
 
 
@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     default_monthly_token_quota: int = 5_000_000
     openai_input_usd_per_million_tokens: float = 0.15
     openai_output_usd_per_million_tokens: float = 0.60
+    sentry_dsn: Optional[str] = Field(default=None, validation_alias="SENTRY_DSN")
 
     @property
     def cors_origin_list(self) -> list[str]:
@@ -96,13 +97,14 @@ class Settings(BaseSettings):
             return "professional"
         return "free"
 
-    def get_quotas_for_price(self, price_id: Optional[str]) -> tuple[int, int]:
+    def get_quotas_for_price(self, price_id: Optional[str]) -> tuple[int, int, int]:
         """
-        Maps a Stripe Price ID to (campaign_quota, token_quota).
+        Maps a Stripe Price ID to (campaign_quota, token_quota, max_media_jobs).
         Returns defaults if price_id is None or unknown.
         """
         tier = self.get_tier_for_price(price_id)
-        return TIER_QUOTA_MAP.get(tier, (self.default_monthly_campaign_quota, self.default_monthly_token_quota))
+        # Default to Professional if free or unknown for safety
+        return TIER_QUOTA_MAP.get(tier, (50, 5_000_000, 10))
 
     @property
     def auth_disabled_flag(self) -> bool:

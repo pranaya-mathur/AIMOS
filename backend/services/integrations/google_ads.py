@@ -40,7 +40,7 @@ def create_campaign(campaign_name: str, customer_id: Optional[str] = None) -> di
         from google.ads.googleads.client import GoogleAdsClient
         from google.ads.googleads.errors import GoogleAdsException
         
-        # Load from environment variables
+        # 1. Load configuration
         credentials = {
             "developer_token": os.getenv("GOOGLE_ADS_DEVELOPER_TOKEN"),
             "refresh_token": os.getenv("GOOGLE_ADS_REFRESH_TOKEN"),
@@ -55,21 +55,37 @@ def create_campaign(campaign_name: str, customer_id: Optional[str] = None) -> di
         if not cid:
             raise GoogleAdsError("GOOGLE_ADS_CUSTOMER_ID is not set")
             
-        logger.info("Initializing Google Ads campaign creation for CID: %s", cid)
+        logger.info("Initializing Google Ads campaign for CID: %s", cid)
         
-        # In a full production implementation, we'd build the campaign service request here.
-        # For the AIMOS Live Wire Bridge, we verify connectivity and return the draft intent.
+        # 2. Build Campaign Object
+        campaign_service = client.get_service("CampaignService")
+        campaign_operation = client.get_type("CampaignOperation")
+        campaign = campaign_operation.create
+        
+        campaign.name = campaign_name
+        campaign.advertising_channel_type = client.enums.AdvertisingChannelTypeEnum.SEARCH
+        campaign.status = client.enums.CampaignStatusEnum.PAUSED
+        
+        # Set a manual CPC bid strategy
+        campaign.manual_cpc.enhanced_cpc_enabled = True
+        
+        # 3. Execute
+        response = campaign_service.mutate_campaigns(customer_id=cid, operations=[campaign_operation])
+        resource_name = response.results[0].resource_name
         
         return {
             "provider": "google_ads",
-            "status": "connected",
-            "message": f"SDK initialized for customer {cid}. Real campaign creation drafted.",
+            "status": "success",
+            "resource_name": resource_name,
             "campaign_name": campaign_name
         }
         
     except ImportError:
         logger.error("google-ads library not installed")
         raise GoogleAdsError("google-ads library is missing. Run pip install google-ads")
+    except GoogleAdsException as ex:
+        logger.error("Google Ads API call failed: %s", ex)
+        raise GoogleAdsError(f"Google Ads API Error: {ex.error.results[0].message}")
     except Exception as e:
         logger.exception("Google Ads connection failed")
         raise GoogleAdsError(str(e))

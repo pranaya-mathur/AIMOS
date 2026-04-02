@@ -9,7 +9,9 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from db import get_db
-from models import JobAudit
+from models import JobAudit, User
+from deps import get_agency_user
+from services.usage.quotas import assert_can_create_media_job
 from services.integrations.media_store import save_webhook_result
 from services.integrations.webhook_constants import PROVIDER_WEBHOOK_SECRET_ENV, SUPPORTED_MEDIA_PROVIDERS
 from services.integrations.webhook_security import verify_provider_signature
@@ -22,11 +24,17 @@ router = APIRouter()
 
 class MediaRequest(BaseModel):
     input: dict = Field(default_factory=dict)
+    campaign_id: Optional[str] = None
 
 
-def _enqueue(provider: str, input_payload: dict, db: Session) -> dict:
+def _enqueue(provider: str, input_payload: dict, db: Session, user: User, campaign_id: Optional[str] = None) -> dict:
     if provider not in SUPPORTED_MEDIA_PROVIDERS:
         raise HTTPException(status_code=404, detail="Unknown provider")
+    
+    # Quota Check
+    if campaign_id:
+        assert_can_create_media_job(db, user, campaign_id)
+
     request_id = str(uuid.uuid4())
     task = run_media_provider_job.delay(provider, input_payload, request_id)
     audit = JobAudit(
@@ -39,27 +47,29 @@ def _enqueue(provider: str, input_payload: dict, db: Session) -> dict:
     db.add(audit)
     db.commit()
     logger.info(
-        "media.job_enqueued provider=%s celery_task_id=%s request_id=%s",
+        "media.job_enqueued provider=%s celery_task_id=%s request_id=%s user_id=%s campaign_id=%s",
         provider,
         task.id,
         request_id,
+        user.id,
+        campaign_id
     )
     return {"task_id": task.id, "provider": provider, "request_id": request_id}
 
 
 @router.post("/adcreative/create")
-def create_adcreative(payload: MediaRequest, db: Session = Depends(get_db)):
-    return _enqueue("adcreative", payload.input, db)
+def create_adcreative(payload: MediaRequest, user: User = Depends(get_agency_user), db: Session = Depends(get_db)):
+    return _enqueue("adcreative", payload.input, db, user, payload.campaign_id)
 
 
 @router.post("/pictory/create")
-def create_pictory(payload: MediaRequest, db: Session = Depends(get_db)):
-    return _enqueue("pictory", payload.input, db)
+def create_pictory(payload: MediaRequest, user: User = Depends(get_agency_user), db: Session = Depends(get_db)):
+    return _enqueue("pictory", payload.input, db, user, payload.campaign_id)
 
 
 @router.post("/elevenlabs/create")
-def create_elevenlabs(payload: MediaRequest, db: Session = Depends(get_db)):
-    return _enqueue("elevenlabs", payload.input, db)
+def create_elevenlabs(payload: MediaRequest, user: User = Depends(get_agency_user), db: Session = Depends(get_db)):
+    return _enqueue("elevenlabs", payload.input, db, user, payload.campaign_id)
 
 
 @router.post("/webhook/{provider}")

@@ -115,3 +115,71 @@ def get_campaign_analytics(
             } for m in metrics
         ]
     }
+
+@router.post("/optimize/{campaign_id}", tags=["analytics"])
+def trigger_campaign_optimization(
+    campaign_id: str,
+    user: User = Depends(get_agency_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Manually triggers the AI Optimization Engine for a campaign.
+    Fetches latest metrics and runs the 'optimization_engine' agent.
+    """
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+        
+    if user and user.role != "platform_admin" and campaign.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    from services.integrations.metrics_service import fetch_campaign_performance, get_platform_for_campaign
+    from services.agents.agent_runner import run_agent
+    from services.prompts.loader import get_agent_bundle
+    import uuid
+
+    # 1. Fetch metrics
+    platform = get_platform_for_campaign(campaign.input)
+    perf = fetch_campaign_performance(campaign.id, platform)
+
+    # 2. Persist metrics
+    metric_row = CampaignMetric(
+        id=str(uuid.uuid4()),
+        campaign_id=campaign.id,
+        day=perf["day"],
+        platform=perf["platform"],
+        spend=perf["spend"],
+        impressions=perf["impressions"],
+        clicks=perf["clicks"],
+        conversions=perf["conversions"],
+    )
+    db.add(metric_row)
+
+    # 3. Run Optimization Engine
+    bundle = get_agent_bundle("optimization_engine")
+    state = {
+        "input": campaign.input,
+        "agent_outputs": {
+            "current_metrics": perf
+        }
+    }
+    result_state = run_agent(
+        state,
+        name=bundle["agent_name"],
+        output_key=bundle["output_key"],
+        schema=bundle["schema"],
+        prompt_template=bundle["task_template"]
+    )
+    directives = result_state["agent_outputs"]["optimization_engine"]
+
+    # 4. Update
+    existing_output = dict(campaign.output or {})
+    existing_output["optimization_directives"] = directives
+    campaign.output = existing_output
+    db.commit()
+
+    return {
+        "ok": True,
+        "campaign_id": campaign_id,
+        "directives": directives
+    }
