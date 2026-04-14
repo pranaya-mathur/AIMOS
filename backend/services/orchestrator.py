@@ -1,3 +1,4 @@
+from typing import Optional
 from langgraph.graph import StateGraph
 from sqlalchemy.orm import Session
 from db import SessionLocal
