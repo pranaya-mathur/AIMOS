@@ -1,113 +1,65 @@
-import json
-import logging
-from typing import Optional
-import os
-import uuid
-
-from fastapi import APIRouter, Depends, Header, HTTPException, Request
-from pydantic import BaseModel, Field
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
 from db import get_db
-from models import JobAudit, User
 from deps import get_agency_user
-from services.usage.quotas import assert_can_create_media_job
-from services.integrations.media_store import save_webhook_result
-from services.integrations.webhook_constants import PROVIDER_WEBHOOK_SECRET_ENV, SUPPORTED_MEDIA_PROVIDERS
-from services.integrations.webhook_security import verify_provider_signature
-from tasks import run_media_provider_job
-
-logger = logging.getLogger(__name__)
+from models import MediaAsset, User
+from pydantic import BaseModel
+from datetime import datetime
 
 router = APIRouter()
 
+class MediaAssetSchema(BaseModel):
+    id: str
+    provider: str
+    asset_type: str
+    url: Optional[str]
+    created_at: datetime
 
-class MediaRequest(BaseModel):
-    input: dict = Field(default_factory=dict)
-    campaign_id: Optional[str] = None
+    class Config:
+        from_attributes = True
 
-
-def _enqueue(provider: str, input_payload: dict, db: Session, user: User, campaign_id: Optional[str] = None) -> dict:
-    if provider not in SUPPORTED_MEDIA_PROVIDERS:
-        raise HTTPException(status_code=404, detail="Unknown provider")
-    
-    # Quota Check
-    if campaign_id:
-        assert_can_create_media_job(db, user, campaign_id)
-
-    request_id = str(uuid.uuid4())
-    task = run_media_provider_job.delay(provider, input_payload, request_id)
-    audit = JobAudit(
-        id=str(uuid.uuid4()),
-        celery_task_id=task.id,
-        provider=provider,
-        request_id=request_id,
-        input_snapshot=input_payload or {},
-    )
-    db.add(audit)
-    db.commit()
-    logger.info(
-        "media.job_enqueued provider=%s celery_task_id=%s request_id=%s user_id=%s campaign_id=%s",
-        provider,
-        task.id,
-        request_id,
-        user.id,
-        campaign_id
-    )
-    return {"task_id": task.id, "provider": provider, "request_id": request_id}
-
-
-@router.post("/adcreative/create")
-def create_adcreative(payload: MediaRequest, user: User = Depends(get_agency_user), db: Session = Depends(get_db)):
-    return _enqueue("adcreative", payload.input, db, user, payload.campaign_id)
-
-
-@router.post("/pictory/create")
-def create_pictory(payload: MediaRequest, user: User = Depends(get_agency_user), db: Session = Depends(get_db)):
-    return _enqueue("pictory", payload.input, db, user, payload.campaign_id)
-
-
-@router.post("/elevenlabs/create")
-def create_elevenlabs(payload: MediaRequest, user: User = Depends(get_agency_user), db: Session = Depends(get_db)):
-    return _enqueue("elevenlabs", payload.input, db, user, payload.campaign_id)
-
-
-@router.post("/webhook/{provider}")
-async def media_webhook(
-    provider: str,
-    request: Request,
-    x_webhook_token: Optional[str] = Header(default=None),
+@router.get("/assets", response_model=List[MediaAssetSchema])
+def get_media_assets(
+    db: Session = Depends(get_db),
+    user: Optional[User] = Depends(get_agency_user),
 ):
-    raw_body = await request.body()
-    try:
-        payload = json.loads(raw_body)
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid JSON body")
+    """Fetch all AI-generated assets for the current user/organization."""
+    query = db.query(MediaAsset)
+    
+    if user:
+        if user.organization_id:
+            query = query.filter(MediaAsset.user_id.in_(
+                db.query(User.id).filter(User.organization_id == user.organization_id)
+            ))
+        else:
+            query = query.filter(MediaAsset.user_id == user.id)
+    
+    return query.order_by(MediaAsset.created_at.desc()).all()
 
-    provider_key = provider.lower()
-    if provider_key not in SUPPORTED_MEDIA_PROVIDERS:
-        raise HTTPException(status_code=404, detail="Unsupported provider")
+@router.delete("/assets/{asset_id}")
+def delete_media_asset(
+    asset_id: str,
+    db: Session = Depends(get_db),
+    user: Optional[User] = Depends(get_agency_user),
+):
+    """Delete a generated asset from the library."""
+    asset = db.query(MediaAsset).filter(MediaAsset.id == asset_id).first()
+    if not asset:
+        raise HTTPException(status_code=404, detail="Asset not found")
+        
+    # Check ownership
+    if user:
+        if user.organization_id:
+            # Check if asset owner is in same org
+            owner = db.query(User).filter(User.id == asset.user_id).first()
+            if not owner or owner.organization_id != user.organization_id:
+                if user.role != "platform_admin":
+                    raise HTTPException(status_code=403, detail="Forbidden")
+        elif asset.user_id != user.id:
+            if user.role != "platform_admin":
+                raise HTTPException(status_code=403, detail="Forbidden")
 
-    signature_ok, signature_reason = verify_provider_signature(provider_key, raw_body, request.headers)
-    provider_secret_is_configured = bool(os.getenv(PROVIDER_WEBHOOK_SECRET_ENV[provider_key]))
-    if provider_secret_is_configured and not signature_ok:
-        raise HTTPException(status_code=401, detail=f"Signature check failed: {signature_reason}")
-
-    if not provider_secret_is_configured:
-        expected_token = os.getenv("MEDIA_WEBHOOK_TOKEN")
-        if expected_token and x_webhook_token != expected_token:
-            raise HTTPException(status_code=401, detail="Invalid webhook token")
-
-    request_id = payload.get("request_id")
-    meta = payload.get("metadata")
-    if not request_id and isinstance(meta, dict):
-        request_id = meta.get("request_id")
-    _meta = payload.get("_meta")
-    if not request_id and isinstance(_meta, dict):
-        request_id = _meta.get("request_id")
-    if not request_id:
-        raise HTTPException(status_code=400, detail="request_id missing from webhook payload")
-
-    save_webhook_result(provider=provider_key, request_id=request_id, payload=payload)
-    logger.info("media.webhook_accepted provider=%s request_id=%s", provider_key, request_id)
-    return {"status": "accepted", "provider": provider_key, "request_id": request_id}
+    db.delete(asset)
+    db.commit()
+    return {"ok": True}

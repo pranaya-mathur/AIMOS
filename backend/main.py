@@ -11,7 +11,7 @@ from core.logging_config import configure_logging
 from db import Base, apply_schema_patches, engine
 import models  # noqa: F401  — register ORM models for metadata.create_all
 from openapi_tags import OPENAPI_TAGS
-from routers import admin, agents, analytics, auth, billing, campaign, creatives, health, job, launch, media, usage, webhooks
+from routers import admin, agents, analytics, auth, billing, brand, campaign, creatives, health, job, launch, leads, media, onboarding, org, usage, webhooks
 
 import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
@@ -98,8 +98,23 @@ app.docs_url = "/docs"
 app.redoc_url = "/redoc"
 
 app.include_router(health.router, prefix="/health", tags=["health"])
+app.include_router(brand.router, prefix="/brand", tags=["brand"])
+app.include_router(media.router, prefix="/media", tags=["media"])
+app.include_router(onboarding.router, prefix="/onboarding", tags=["onboarding"])
+app.include_router(leads.router, prefix="/leads", tags=["leads"])
+app.include_router(org.router, prefix="/org", tags=["organization"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
+
+@app.middleware("http")
+async def secure_headers_middleware(request, call_next):
+    """Milestone 5: Security Hardening (AIM-177)."""
+    response = await call_next(request)
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
+
 app.include_router(billing.router, prefix="/billing", tags=["billing"])
 app.include_router(campaign.router, prefix="/campaign", tags=["campaign"])
 app.include_router(job.router, prefix="/job", tags=["job"])

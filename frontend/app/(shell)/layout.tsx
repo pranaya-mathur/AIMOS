@@ -1,4 +1,5 @@
 import { RequireAuth } from "@/components/auth/RequireAuth";
+import { OnboardingGuard } from "@/components/auth/OnboardingGuard";
 import { ControlTowerShell } from "@/components/layout/ControlTowerShell";
 
 export default function ShellLayout({
@@ -8,7 +9,9 @@ export default function ShellLayout({
 }) {
   return (
     <RequireAuth>
-      <ControlTowerShell>{children}</ControlTowerShell>
+      <OnboardingGuard>
+        <ControlTowerShell>{children}</ControlTowerShell>
+      </OnboardingGuard>
     </RequireAuth>
   );
 }

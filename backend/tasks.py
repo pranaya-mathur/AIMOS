@@ -134,6 +134,30 @@ def run_campaign(data):
 
     if campaign_id:
         _persist_campaign_result(campaign_id, result)
+        
+        # Trigger Automated Media Generation (M2: AIM-037, AIM-042, AIM-046)
+        # We look for handoff hints from the agents to start parallel media jobs
+        media_tasks = []
+        agent_outputs = result.get("agent_outputs", {})
+        
+        # If Content Studio has produced a brief/script, trigger relevant providers
+        content_studio = agent_outputs.get("content_studio", {})
+        if content_studio:
+            # 1. AdCreative.ai for static/social banners
+            if content_studio.get("ad_brief"):
+                media_tasks.append(run_media_provider_job.delay("adcreative", content_studio["ad_brief"], request_id=campaign_id))
+            
+            # 2. Pictory for video generation
+            if content_studio.get("video_script"):
+                media_tasks.append(run_media_provider_job.delay("pictory", {"script": content_studio["video_script"]}, request_id=campaign_id))
+                
+            # 3. ElevenLabs for high-quality voiceover
+            if content_studio.get("voiceover_text"):
+                media_tasks.append(run_media_provider_job.delay("elevenlabs", {"text": content_studio["voiceover_text"]}, request_id=campaign_id))
+
+        if media_tasks:
+            logger.info("Triggered %d media generation tasks for campaign %s", len(media_tasks), campaign_id)
+
     return result
 
 
@@ -142,7 +166,76 @@ def run_media_provider_job(provider: str, data=None, request_id=None):
     payload = _with_request_metadata(data, request_id)
     if provider not in _MEDIA_DISPATCH:
         raise ValueError(f"Unknown media provider: {provider}")
-    return _MEDIA_DISPATCH[provider](payload, request_id=request_id)
+    
+    # Quota Enforcement (M2: AIM-155)
+    db = SessionLocal()
+    try:
+        from models import MediaAsset, Campaign, User
+        from core.config import TIER_QUOTA_MAP, get_settings
+        from datetime import datetime
+        
+        settings = get_settings()
+        user_id = None
+        if request_id:
+            camp = db.query(Campaign).filter(Campaign.id == request_id).first()
+            if camp:
+                user_id = camp.user_id
+        
+        if user_id:
+            user = db.query(User).filter(User.id == user_id).first()
+            if user:
+                tier = user.subscription_tier or "free"
+                _, _, max_media = TIER_QUOTA_MAP.get(tier, TIER_QUOTA_MAP["free"])
+                
+                # If -1, unlimited
+                if max_media != -1:
+                    # Count assets generated this month
+                    start_of_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                    count = db.query(MediaAsset).filter(
+                        MediaAsset.user_id == user_id,
+                        MediaAsset.created_at >= start_of_month
+                    ).count()
+                    
+                    if count >= max_media:
+                        logger.warning("User %s exceeded media generation quota (%d/%d)", user_id, count, max_media)
+                        return {"status": "error", "reason": "quota_exceeded", "limit": max_media}
+    finally:
+        db.close()
+
+    result = _MEDIA_DISPATCH[provider](payload, request_id=request_id)
+    
+    # Persist to database for Asset Library (M2: AIM-055)
+    if result.get("status") in {"completed", "done", "success", "ready"}:
+        db = SessionLocal()
+        try:
+            from models import MediaAsset, Campaign
+            import uuid
+            
+            # Try to associate with user if request_id (campaign_id) is provided
+            user_id = None
+            if request_id:
+                camp = db.query(Campaign).filter(Campaign.id == request_id).first()
+                if camp:
+                    user_id = camp.user_id
+            
+            asset = MediaAsset(
+                id=str(uuid.uuid4()),
+                user_id=user_id,
+                campaign_id=request_id,
+                provider=provider,
+                asset_type="video" if provider == "pictory" else "audio" if provider == "elevenlabs" else "image",
+                url=result.get("asset_url"),
+                metadata_json=result.get("raw")
+            )
+            db.add(asset)
+            db.commit()
+            logger.info("Persisted media asset from %s for campaign %s", provider, request_id)
+        except Exception:
+            logger.exception("Failed to persist media asset")
+        finally:
+            db.close()
+
+    return result
 
 
 @celery.task
@@ -323,11 +416,24 @@ def process_whatsapp_inbound(body: dict):
         )
         db.add(inbound)
 
-        # 3. Generate Reply via OpenAI
+        # 3. AI Lead Intelligence (M2: AIM-081)
+        # Fetch recent history for context
+        history = db.query(ConversationMessage).filter(ConversationMessage.lead_id == lead.id).order_by(ConversationMessage.created_at.desc()).limit(10).all()
+        history_list = [{"direction": m.direction, "content": m.content} for m in reversed(history)]
+        
+        from services.agents.lead_agent import score_lead_intent
+        intelligence = score_lead_intent(history_list)
+        
+        lead.score = intelligence.get("score", lead.score)
+        lead.intent = intelligence.get("intent", lead.intent)
+        lead.sentiment = intelligence.get("sentiment", lead.sentiment)
+        
+        # 4. Generate Reply via OpenAI
         # We craft a prompt that acts as a Lead Capture / Sales Agent
         prompt = (
             f"You are the AI Sales Agent for AIMOS Enterprise.\n"
             f"User name: {lead.full_name or 'there'}\n"
+            f"Lead Intent: {lead.intent}\n"
             f"User message: {text_body}\n\n"
             "Goal: Be professional, helpful, and capture their business interest. "
             "Keep the response short (under 200 characters) for WhatsApp.\n\n"
@@ -335,7 +441,7 @@ def process_whatsapp_inbound(body: dict):
         )
         agent_reply = generate_text(prompt).strip()
 
-        # 4. Persistence & Send
+        # 5. Persistence & Send
         outbound = ConversationMessage(
             id=str(uuid.uuid4()),
             lead_id=lead.id,
@@ -348,8 +454,8 @@ def process_whatsapp_inbound(body: dict):
         # Call the real/mock WhatsApp service
         send_text_message(to_e164=sender_phone, body=agent_reply)
 
-        logger.info("WhatsApp lead captured and replied: lead_id=%s", lead.id)
-        return {"status": "replied", "lead_id": lead.id, "reply": agent_reply}
+        logger.info("WhatsApp lead captured, scored (%d), and replied: lead_id=%s", lead.score, lead.id)
+        return {"status": "replied", "lead_id": lead.id, "score": lead.score, "reply": agent_reply}
 
     finally:
         db.close()

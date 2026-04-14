@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -48,6 +49,11 @@ def list_campaigns(
 class CreateCampaignBody(BaseModel):
     name: Optional[str] = None
     input: dict = Field(default_factory=dict)  # campaign brief / requirements
+    platform: str = Field(default="both", description="meta, google, or both")
+    objective: str = Field(default="leads", description="leads, sales, or awareness")
+    total_budget: float = Field(default=1000.0)
+    schedule_start: Optional[str] = None
+    schedule_end: Optional[str] = None
 
 
 @router.post("/create")
@@ -62,20 +68,43 @@ def create_campaign(
         except QuotaExceededError as exc:
             raise HTTPException(status_code=429, detail=str(exc)) from exc
 
+    from services.governance.audit import log_audit_event
     cid = str(uuid.uuid4())
+    
+    log_audit_event(
+        action="CAMPAIGN_CREATE",
+        user_id=user.id if user else None,
+        organization_id=user.organization_id if user else None,
+        resource_id=cid,
+        metadata={"name": body.name, "platform": body.platform}
+    )
+
     row = Campaign(
         id=cid,
         user_id=user.id if user else None,
         organization_id=user.organization_id if user else None,
         name=body.name,
-        status="pending_approval",
+        status="processing",
         input=body.input,
+        platform=body.platform,
+        objective=body.objective,
+        total_budget=body.total_budget,
+        schedule_start=datetime.fromisoformat(body.schedule_start) if body.schedule_start else None,
+        schedule_end=datetime.fromisoformat(body.schedule_end) if body.schedule_end else None,
     )
     db.add(row)
     db.commit()
-    task = run_campaign.delay({"campaign_id": cid, "input": body.input})
+    
+    # Pass structured context to Celeste/Celery
+    task_payload = {
+        "campaign_id": cid, 
+        "input": body.input,
+        "platform": body.platform,
+        "objective": body.objective,
+        "total_budget": body.total_budget
+    }
+    task = run_campaign.delay(task_payload)
     row.celery_task_id = task.id
-    row.status = "processing"
     db.commit()
     return {"task_id": task.id, "campaign_id": cid}
 

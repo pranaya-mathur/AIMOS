@@ -31,6 +31,24 @@ def apply_schema_patches() -> None:
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status VARCHAR NOT NULL DEFAULT 'none'",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR UNIQUE",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR UNIQUE",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_onboarded VARCHAR NOT NULL DEFAULT 'false'",
+        # Milestone 2: Media Assets
+        "CREATE TABLE IF NOT EXISTS media_assets (id TEXT PRIMARY KEY, user_id TEXT, campaign_id TEXT, provider TEXT, asset_type TEXT, url TEXT, metadata_json TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)",
+        # Milestone 3: Campaign Enhancements
+        "ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS platform VARCHAR DEFAULT 'both'",
+        "ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS objective VARCHAR DEFAULT 'leads'",
+        "ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS total_budget FLOAT DEFAULT 0.0",
+        "ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS schedule_start TIMESTAMP",
+        "ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS schedule_end TIMESTAMP",
+        # Milestone 4: Lead Intelligence
+        "ALTER TABLE leads ADD COLUMN IF NOT EXISTS user_id VARCHAR REFERENCES users(id) ON DELETE SET NULL",
+        "ALTER TABLE leads ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'new'",
+        "ALTER TABLE leads ADD COLUMN IF NOT EXISTS score INTEGER DEFAULT 0",
+        "ALTER TABLE leads ADD COLUMN IF NOT EXISTS intent VARCHAR",
+        "ALTER TABLE leads ADD COLUMN IF NOT EXISTS sentiment VARCHAR",
+        # Milestone 5: Enterprise Governance & Whitelabeling
+        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS whitelabel_config TEXT",
+        "CREATE TABLE IF NOT EXISTS audit_logs (id TEXT PRIMARY KEY, user_id TEXT, organization_id TEXT, action TEXT, resource_id TEXT, metadata_json TEXT, timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP)",
     ]
     with engine.begin() as conn:
         for sql in stmts:

@@ -48,10 +48,10 @@ def get_agency_user(
     creds: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db),
 ) -> Optional[User]:
-    """Agency client or platform admin; None only when AUTH_DISABLED=1 (local dev)."""
+    """Agency client or platform admin; returns first user when AUTH_DISABLED=1."""
     settings = get_settings()
     if settings.auth_disabled_flag:
-        return None
+        return db.query(User).filter(User.role == "platform_admin").first() or db.query(User).first()
     if not creds:
         raise HTTPException(status_code=401, detail="Authentication required")
     try:

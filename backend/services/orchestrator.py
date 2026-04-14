@@ -71,7 +71,32 @@ def build(user_id: Optional[str] = None):
 
 
 def run_agents(data, user_id: Optional[str] = None):
-    return build(user_id).invoke({"input": data, "agent_outputs": {}})
+    initial_input = dict(data)
+    
+    # Inject Brand Context if user_id is provided (AIM-014 to AIM-021)
+    if user_id:
+        db = SessionLocal()
+        try:
+            from models import Brand
+            brand = db.query(Brand).filter(Brand.user_id == user_id).first()
+            if brand:
+                # Add a 'brand' key to the input so agents can use it
+                initial_input["brand_profile"] = {
+                    "name": brand.name,
+                    "category": brand.category,
+                    "description": brand.description,
+                    "target_audience": brand.target_audience,
+                    "marketing_goal": brand.marketing_goal,
+                    "monthly_budget": float(brand.monthly_budget) if brand.monthly_budget else None,
+                    "business_type": brand.business_type,
+                    "industry": brand.industry,
+                    "product_details": brand.product_details,
+                    "pricing_range": brand.pricing_range
+                }
+        finally:
+            db.close()
+
+    return build(user_id).invoke({"input": initial_input, "agent_outputs": {}})
 
 
 def run_single_agent(agent_name: str, data: dict):

@@ -14,34 +14,38 @@ def get_global_analytics(
     db: Session = Depends(get_db)
 ):
     """
-    Returns aggregated metrics across all campaigns the user has access to.
-    Useful for top-level Bubble dashboards.
+    Returns aggregated metrics across all campaigns with trend insights.
     """
     query = db.query(CampaignMetric)
-    
-    # RBAC: Organization-level filtering logic
     if user and user.role != "platform_admin":
         query = query.join(Campaign).filter(Campaign.user_id == user.id)
-    # If no user (AUTH_DISABLED=1), we return all metrics in this test environment.
     
     metrics = query.all()
+    leads_count = (db.query(Lead).filter(Lead.user_id == user.id).count() if user and user.role != "platform_admin" else db.query(Lead).count())
     
     total_spend = sum(m.spend for m in metrics)
     total_impressions = sum(m.impressions for m in metrics)
     total_clicks = sum(m.clicks for m in metrics)
     total_conversions = sum(m.conversions for m in metrics)
     
+    # ROI Calculation (Mock: assuming $50 revenue per conversion)
+    estimated_revenue = total_conversions * 50.0
+    roi = ((estimated_revenue - total_spend) / total_spend) if total_spend > 0 else 0
+    
     ctr = (total_clicks / total_impressions) if total_impressions > 0 else 0
     cvr = (total_conversions / total_clicks) if total_clicks > 0 else 0
+    cpl = (total_spend / leads_count) if leads_count > 0 else 0
     
     return {
         "summary": {
             "total_spend": float(total_spend),
-            "total_impressions": total_impressions,
-            "total_clicks": total_clicks,
+            "estimated_revenue": float(estimated_revenue),
+            "roi": float(roi),
+            "total_leads": leads_count,
             "total_conversions": total_conversions,
             "ctr": float(ctr),
-            "cvr": float(cvr)
+            "cvr": float(cvr),
+            "cpl": float(cpl)
         },
         "campaign_count": (db.query(Campaign).filter(Campaign.user_id == user.id).count() if user and user.role != "platform_admin" else db.query(Campaign).count())
     }
