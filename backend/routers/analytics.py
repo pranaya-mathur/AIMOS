@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
 from db import get_db
-from models import User, Campaign, CampaignMetric, UsageEvent, Lead, OptimizationDirective
+from models import User, Campaign, CampaignMetric, UsageEvent, Lead, OptimizationDirective, CompetitorIntel, Brand
 from deps import get_agency_user
 import uuid
 from datetime import datetime
@@ -101,6 +101,7 @@ def get_campaign_analytics(
 
     metrics = db.query(CampaignMetric).filter(CampaignMetric.campaign_id == campaign_id).order_by(CampaignMetric.day).all()
     leads_count = db.query(Lead).filter(Lead.campaign_id == campaign_id).count()
+    competitor_count = db.query(CompetitorIntel).filter(CompetitorIntel.brand_id == campaign.brand_id).count() if campaign.brand_id else 0
     
     # Summary of this campaign specifically
     total_spend = sum(m.spend for m in metrics)
@@ -111,6 +112,7 @@ def get_campaign_analytics(
         "campaign_name": campaign.name,
         "total_leads": leads_count,
         "total_spend": float(total_spend),
+        "competitor_count": competitor_count,
         "cost_per_lead": float(total_spend / leads_count) if leads_count > 0 else 0,
         "daily_performance": [
             {
@@ -140,8 +142,8 @@ def trigger_campaign_optimization(
         raise HTTPException(status_code=403, detail="Forbidden")
 
     from services.integrations.metrics_service import fetch_campaign_performance, get_platform_for_campaign
-    from services.agents.agent_runner import run_agent
     from services.prompts.loader import get_agent_bundle
+    from models import Organization
     import uuid
 
     # 1. Fetch metrics
@@ -189,6 +191,13 @@ def trigger_campaign_optimization(
 
     # 4. Create structured Directive records (AIM-060)
     created_directives = []
+    
+    # 2.0 Governance: Load threshold from Org
+    org = db.query(Organization).filter(Organization.id == user.organization_id).first()
+    gov = org.governance_settings or {}
+    threshold_amount = gov.get("senior_approval_threshold_amount", 500)
+    
+    # ... rule iteration ...
     
     # Scale Rules
     for rule in directives.get("scale_rules", []):
@@ -265,7 +274,23 @@ def apply_directive(
         raise HTTPException(status_code=404, detail="Directive not found")
     
     if user and user.role != "platform_admin" and directive.user_id != user.id:
-        raise HTTPException(status_code=403, detail="Forbidden")
+        # Check if the user is in the same Organization (Agency context)
+        if user.organization_id != directive.campaign.organization_id:
+             raise HTTPException(status_code=403, detail="Forbidden")
+    
+    # 2.0 Governance: Check for Multi-Sig (Senior Approval)
+    if directive.requires_senior_approval and not directive.senior_approver_id:
+        if user.id == directive.user_id:
+            # Re-confirming their own shift, but they still need a second pair of eyes
+            return {
+                "ok": False, 
+                "message": "High-risk shift detected. This action requires a second approval from a teammate (Agency Client or Admin).",
+                "requires_cosign": True
+            }
+        else:
+            # A different person from the same org is approving!
+            directive.senior_approver_id = user.id
+            # Now we can proceed to the actual platform apply logic below
 
     # 1. Capture current status/budget as a snapshot (Safety Reversibility)
     campaign = db.query(Campaign).filter(Campaign.id == directive.campaign_id).first()
@@ -334,3 +359,30 @@ def revert_directive(
     db.commit()
 
     return {"ok": True, "reverted_to": snapshot}
+
+@router.get("/competitors/{campaign_id}", response_model=List[dict])
+def get_campaign_competitors(
+    campaign_id: str,
+    user: User = Depends(get_agency_user),
+    db: Session = Depends(get_db)
+):
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+        
+    if not campaign.brand_id:
+        return []
+
+    competitors = db.query(CompetitorIntel).filter(CompetitorIntel.brand_id == campaign.brand_id).all()
+    
+    return [
+        {
+            "id": c.id,
+            "name": c.competitor_name,
+            "url": c.competitor_url,
+            "positioning": c.positioning,
+            "ad_hooks": c.ad_hooks,
+            "price_intelligence": c.pricing_notes,
+            "threat_level": c.risk_to_client
+        } for c in competitors
+    ]

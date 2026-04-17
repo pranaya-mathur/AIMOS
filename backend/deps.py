@@ -77,3 +77,49 @@ def get_admin_user(user: User = Depends(get_current_user)) -> User:
     if user.role != "platform_admin":
         raise HTTPException(status_code=403, detail="Platform admin role required")
     return user
+
+
+def get_end_customer(user: User = Depends(get_current_user)) -> User:
+    """End customers only (direct brand owners)."""
+    if user.role not in ("end_customer", "agency_client", "platform_admin"):
+        raise HTTPException(status_code=403, detail="Customer role required")
+    return user
+
+
+def check_org_access(user: User, target_org_id: str):
+    """
+    Hardened 2.0 Phase 7: Enforce organization-level silos.
+    Ensures that users from Org A cannot access resources in Org B.
+    """
+    if user.role == "platform_admin":
+        return True
+    
+    if not user.organization_id or user.organization_id != target_org_id:
+        raise HTTPException(
+            status_code=403, 
+            detail="Forbidden: Resource belongs to a different organization silo."
+        )
+    return True
+
+def can_access_brand(user: User, brand_id: str, db: Session):
+    """
+    Policy: 
+    - End Customer: Only their own brand.
+    - Agency Client: Any brand in their Organization.
+    - Admin: Everything.
+    """
+    from models import Brand
+    brand = db.query(Brand).filter(Brand.id == brand_id).first()
+    if not brand:
+        return False
+        
+    if user.role == "platform_admin":
+        return True
+        
+    if user.role == "end_customer":
+        return brand.user_id == user.id
+        
+    if user.role == "agency_client":
+        return brand.organization_id == user.organization_id
+        
+    return False

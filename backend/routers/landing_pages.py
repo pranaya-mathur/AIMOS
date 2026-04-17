@@ -35,6 +35,12 @@ class UpdateLandingPageBody(BaseModel):
     content_json: Optional[dict] = None
     is_published: Optional[str] = None
 
+class LeadCaptureBody(BaseModel):
+    full_name: str
+    email: Optional[str] = None
+    phone: str
+    metadata: Optional[dict] = Field(default_factory=dict)
+
 @router.get("", response_model=List[LandingPageSchema])
 def list_landing_pages(
     db: Session = Depends(get_db),
@@ -161,3 +167,55 @@ def delete_landing_page(
     db.delete(page)
     db.commit()
     return {"ok": True}
+
+@router.post("/{slug}/convert", tags=["public"])
+def convert_landing_page(
+    slug: str,
+    body: LeadCaptureBody,
+    db: Session = Depends(get_db)
+):
+    """Public endpoint called by the Landing Page form to submit a lead."""
+    from models import Lead
+    
+    page = db.query(LandingPage).filter(LandingPage.slug == slug).first()
+    if not page:
+        raise HTTPException(status_code=404, detail="Landing page not found")
+        
+    # 1. Create the Lead record
+    lead_id = str(uuid.uuid4())
+    new_lead = Lead(
+        id=lead_id,
+        phone=body.phone,
+        full_name=body.full_name,
+        email=body.email,
+        user_id=page.user_id,
+        organization_id=page.organization_id,
+        landing_page_id=page.id,
+        source="landing_page",
+        status="new",
+        lead_metadata=body.metadata
+    )
+    db.add(new_lead)
+    
+    # 2. Increment Conversion Count
+    page.conversions_count = (page.conversions_count or 0) + 1
+    
+    db.commit()
+    return {"ok": True, "lead_id": lead_id}
+
+@router.get("/public/{slug}", tags=["public"], response_model=LandingPageSchema)
+def get_public_landing_page(
+    slug: str,
+    db: Session = Depends(get_db)
+):
+    """Fetch public page content and track views."""
+    page = db.query(LandingPage).filter(LandingPage.slug == slug).first()
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    # Track views (M5 Analytics)
+    page.views_count = (page.views_count or 0) + 1
+    db.commit()
+    db.refresh(page)
+    
+    return page

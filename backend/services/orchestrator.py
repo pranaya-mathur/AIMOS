@@ -18,10 +18,13 @@ from services.agents import (
     predictive_benchmarker_agent,
     sales_agent_agent,
     social_media_manager_agent,
+    competitive_spy_agent,
+    wisdom_extractor_agent,
 )
 
-# BRD v2 order: strategy → brand → content → paid → social → leads → sales → engagement → analytics → optimization → growth → dashboard
+# BRD v2 order: spy → strategy → brand → content → paid → social → leads → sales → engagement → analytics → optimization → growth → dashboard
 AGENT_ORDER = [
+    ("competitive_spy", competitive_spy_agent.run),
     ("business_analyzer", business_analyzer_agent.run),
     ("brand_builder", brand_builder_agent.run),
     ("content_studio", content_studio_agent.run),
@@ -35,6 +38,7 @@ AGENT_ORDER = [
     ("optimization_engine", optimization_engine_agent.run),
     ("growth_planner", growth_planner_agent.run),
     ("business_dashboard", business_dashboard_agent.run),
+    ("wisdom_extractor", wisdom_extractor_agent.run),
 ]
 
 AGENT_RUNNERS = {name: runner for name, runner in AGENT_ORDER}
@@ -51,6 +55,11 @@ class AgentState(TypedDict):
     # Configuration
     orchestration_config: dict # { "max_iterations": 3, "manual_intervention": True }
     status_signal: Optional[str] # None | "PAUSE"
+    # Phase 2 Context
+    seller_profile: Optional[dict]
+    competitor_intel: Optional[List[dict]]
+    historical_wisdom: Optional[List[dict]]
+    product_catalog: Optional[List[dict]]
 
 
 def supervisor_router(state: AgentState):
@@ -119,7 +128,10 @@ def supervisor_router(state: AgentState):
                 return AGENT_ORDER[idx + 1][0]
             break
 
-    return "business_dashboard"
+    if last_agent == "wisdom_extractor":
+        return END
+
+    return "wisdom_extractor"
 
 
 def enforce_quota_wrapper(runner, user_id: str):
@@ -204,7 +216,7 @@ def run_agents(data, user_id: Optional[str] = None):
                     },
                     "strategy": {
                         "target_audience": brand.target_audience,
-                        "marketing_goal": brand.marketing_goal,
+                        "primary_goal": brand.primary_goal,
                         "monthly_budget": float(brand.monthly_budget) if brand.monthly_budget else None,
                         "pricing_range": brand.pricing_range,
                         "business_type": brand.business_type,
@@ -219,6 +231,30 @@ def run_agents(data, user_id: Optional[str] = None):
                     "analysis_report": brand.analysis_report,
                     "product_details": brand.product_details,
                 }
+            if brand:
+                from models import CompetitorIntel
+                competitors = db.query(CompetitorIntel).filter(CompetitorIntel.brand_id == brand.id).all()
+                competitor_data = [
+                    {"name": c.competitor_name, "url": c.competitor_url, "positioning": c.positioning} 
+                    for c in competitors
+                ]
+            if brand:
+                from models import BrandWisdom
+                wisdom_logs = db.query(BrandWisdom).filter(BrandWisdom.brand_id == brand.id).order_by(BrandWisdom.created_at.desc()).limit(5).all()
+                wisdom_data = [
+                    {"type": w.insight_type, "insight": w.content, "impact": w.impact_score}
+                    for w in wisdom_logs
+                ]
+            if brand:
+                from models import Product
+                active_products = db.query(Product).filter(
+                    Product.brand_id == brand.id,
+                    Product.is_sync_enabled == True
+                ).limit(20).all()
+                product_data = [
+                    {"id": p.external_id, "title": p.title, "price": str(p.price), "stock": p.inventory_quantity}
+                    for p in active_products
+                ]
         finally:
             db.close()
 
@@ -230,7 +266,11 @@ def run_agents(data, user_id: Optional[str] = None):
         "next_step": None,
         "refinement_context": None,
         "orchestration_config": orchestration_config,
-        "status_signal": None
+        "status_signal": None,
+        "seller_profile": initial_input.get("brand_profile"),
+        "competitor_intel": competitor_data if 'competitor_data' in locals() else [],
+        "historical_wisdom": wisdom_data if 'wisdom_data' in locals() else [],
+        "product_catalog": product_data if 'product_data' in locals() else []
     })
 
 

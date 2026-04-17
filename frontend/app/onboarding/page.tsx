@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { upsertBrand, completeOnboarding, type BrandData } from "@/lib/api/brand";
 
 const STEPS = [
-  { id: "type", title: "Business Type", description: "How would you categorize your business?" },
+  { id: "business_type", title: "Business Type", description: "How would you categorize your business?" },
   { id: "industry", title: "Industry", description: "Which sector do you operate in?" },
-  { id: "goal", title: "Primary Goal", description: "What do you want to achieve first?" },
-  { id: "budget", title: "Monthly Budget", description: "What is your estimated marketing budget?" },
-  { id: "platforms", title: "Platforms", description: "Where should we run your campaigns?" },
+  { id: "primary_goal", title: "Primary Goal", description: "What do you want to achieve first?" },
+  { id: "monthly_budget", title: "Monthly Budget", description: "What is your estimated marketing budget?" },
+  { id: "platform_preference", title: "Platforms", description: "Where should we run your campaigns?" },
 ];
 
 export default function OnboardingPage() {
@@ -19,7 +19,7 @@ export default function OnboardingPage() {
   const [formData, setFormData] = useState<Partial<BrandData>>({
     business_type: "",
     industry: "",
-    marketing_goal: "",
+    primary_goal: "",
     monthly_budget: 1000,
     platform_preference: [],
     name: "My Brand", // Default placeholder for onboarding
@@ -32,6 +32,10 @@ export default function OnboardingPage() {
       setLoading(true);
       try {
         await upsertBrand(formData as BrandData);
+        // Trigger Market Intelligence / Spy Agent immediately (M1 Intelligence)
+        // We use the 'generate-kit' endpoint as it triggers the strategy chain
+        fetch("/api/brand/generate-kit", { method: "POST" }).catch(console.error);
+        
         await completeOnboarding();
         router.push("/");
       } catch (e) {
@@ -126,9 +130,9 @@ export default function OnboardingPage() {
                 ].map((g) => (
                   <button
                     key={g.id}
-                    onClick={() => update("marketing_goal", g.id)}
+                    onClick={() => update("primary_goal", g.id)}
                     className={`flex items-center justify-between rounded-2xl border-2 p-6 text-left transition-all ${
-                      formData.marketing_goal === g.id
+                      formData.primary_goal === g.id
                         ? "border-violet-600 bg-violet-50"
                         : "border-slate-100 bg-white"
                     }`}

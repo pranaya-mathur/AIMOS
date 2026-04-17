@@ -1,0 +1,25 @@
+{
+  "name": "Competitive Spy Agent",
+  "role": "Strategic Intelligence & Market Researcher",
+  "description": "Hardened 2.0 Phase 2: Automates competitor ad research and positioning analysis to ground the strategy in real-world market context.",
+  "required_outputs": [
+    "competitors",
+    "market_positioning_analysis",
+    "competitor_ad_hooks",
+    "pricing_intelligence",
+    "strategic_risks"
+  ],
+  "schema": {
+    "competitors": [
+      {
+        "name": "string",
+        "url": "string",
+        "positioning": "string",
+        "pricing_range": "string",
+        "ad_copy_samples": ["string"]
+      }
+    ],
+    "market_positioning_analysis": "string",
+    "strategic_risks": ["string"]
+  }
+}

@@ -14,19 +14,20 @@ router = APIRouter()
 
 class BrandUpsertBody(BaseModel):
     name: str
-    category: Optional[str] = None
-    description: Optional[str] = None
+    # Seller Profile (AIM-001-005)
+    business_type: Optional[str] = None
+    industry: Optional[str] = None
+    primary_goal: Optional[str] = None
+    monthly_budget: Optional[float] = None
+    platform_preference: list = Field(default_factory=list)
+    
+    # Context & Strategy
     logo_url: Optional[str] = None
     website_url: Optional[str] = None
     social_links: dict = Field(default_factory=dict)
     target_audience: dict = Field(default_factory=dict)
     product_details: list = Field(default_factory=list)
     pricing_range: Optional[str] = None
-    business_type: Optional[str] = None
-    industry: Optional[str] = None
-    marketing_goal: Optional[str] = None
-    monthly_budget: Optional[float] = None
-    platform_preference: list = Field(default_factory=list)
     ai_generated_kit: Optional[dict] = None
     analysis_report: Optional[dict] = None
 
@@ -82,21 +83,23 @@ def upsert_brand(
 
     # Update fields
     brand.name = body.name
-    brand.category = body.category
-    brand.description = body.description
+    brand.business_type = body.business_type
+    brand.industry = body.industry
+    brand.primary_goal = body.primary_goal
+    brand.monthly_budget = body.monthly_budget
+    brand.platform_preference = ", ".join(body.platform_preference) if body.platform_preference else None
+    
     brand.logo_url = body.logo_url
     brand.website_url = body.website_url
     brand.social_links = body.social_links
     brand.target_audience = body.target_audience
     brand.product_details = body.product_details
     brand.pricing_range = body.pricing_range
-    brand.business_type = body.business_type
-    brand.industry = body.industry
-    brand.marketing_goal = body.marketing_goal
-    brand.monthly_budget = body.monthly_budget
-    brand.platform_preference = body.platform_preference
     brand.ai_generated_kit = body.ai_generated_kit
     brand.analysis_report = body.analysis_report
+    # Preserve legacy fields if needed
+    if hasattr(brand, 'category'): brand.category = body.business_type
+    if hasattr(brand, 'description'): brand.description = body.industry
 
     db.commit()
     db.refresh(brand)

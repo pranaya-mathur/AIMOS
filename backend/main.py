@@ -31,8 +31,9 @@ from routers import (
     public,
     usage,
     webhooks,
-    team,
     orchestration,
+    chat,
+    org_analytics,
 )
 
 app.include_router(orchestration.router, prefix="/orchestration", tags=["Orchestration"])
@@ -150,6 +151,8 @@ app.include_router(creatives.router, prefix="/creatives", tags=["creatives"])
 app.include_router(media.router, prefix="/media", tags=["media"])
 app.include_router(usage.router, prefix="/usage", tags=["usage"])
 app.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
+app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
+app.include_router(org_analytics.router, prefix="/api/org-analytics", tags=["org_analytics"])
 app.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
 
 

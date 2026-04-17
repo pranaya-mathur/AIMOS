@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from db import get_db
 from deps import get_agency_user
-from models import Campaign, User
+from models import Campaign, User, Brand
 from services.usage.exceptions import QuotaExceededError
 from services.usage.quotas import assert_can_create_campaign
 from tasks import run_campaign
@@ -79,15 +79,39 @@ def create_campaign(
         metadata={"name": body.name, "platform": body.platform}
     )
 
+    # 1. Fetch Brand Context (Smart Onboarding Integration)
+    brand = None
+    if user:
+        if user.organization_id:
+            brand = db.query(Brand).filter(Brand.organization_id == user.organization_id).first()
+        else:
+            brand = db.query(Brand).filter(Brand.user_id == user.id).first()
+    
+    # 2. Supplemental Injection (if not provided in body)
+    final_input = dict(body.input)
+    if brand:
+        if not final_input.get("industry") and brand.industry:
+            final_input["industry"] = brand.industry
+        if not final_input.get("business_type") and brand.business_type:
+            final_input["business_type"] = brand.business_type
+        if not final_input.get("website_url") and brand.website_url:
+            final_input["website_url"] = brand.website_url
+            
+    final_objective = body.objective
+    if brand and (not final_objective or final_objective == "leads") and brand.primary_goal:
+        # Default to brand goal if specific campaign objective is missing/generic
+        final_objective = brand.primary_goal.lower()
+
     row = Campaign(
         id=cid,
         user_id=user.id if user else None,
         organization_id=user.organization_id if user else None,
+        brand_id=brand.id if brand else None,
         name=body.name,
         status="processing",
-        input=body.input,
+        input=final_input,
         platform=body.platform,
-        objective=body.objective,
+        objective=final_objective,
         total_budget=body.total_budget,
         schedule_start=datetime.fromisoformat(body.schedule_start) if body.schedule_start else None,
         schedule_end=datetime.fromisoformat(body.schedule_end) if body.schedule_end else None,

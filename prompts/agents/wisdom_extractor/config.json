@@ -1,0 +1,20 @@
+{
+  "agent_name": "wisdom_extractor",
+  "output_key": "wisdom_logs",
+  "description": "Hardened 2.0 Phase 5: Extracts strategic lessons and anti-patterns from campaign cycles for long-term brand memory.",
+  "schema": {
+    "insights": [
+        {
+            "insight_type": "string",
+            "content": "string",
+            "impact_score": "integer",
+            "context_tags": {
+                "industry": "string",
+                "goal": "string",
+                "platform": "string"
+            }
+        }
+    ],
+    "learned_anti_patterns": ["string"]
+  }
+}

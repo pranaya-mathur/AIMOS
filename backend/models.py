@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Date, DateTime, Float, ForeignKey, Index, Integer, JSON, Numeric, String
+from sqlalchemy import Column, Date, DateTime, Float, ForeignKey, Index, Integer, JSON, Numeric, String, Boolean, Text
 from sqlalchemy.sql import func
 
 from db import Base
@@ -26,6 +26,10 @@ class Organization(Base):
     autopilot_enabled = Column(Boolean, default=False, server_default="false")
     autopilot_max_shift_percent = Column(Float, default=5.0, server_default="5.0")
     autopilot_max_shift_amount = Column(Float, default=100.0, server_default="100.0")
+    
+    # Hardened 2.0 Phase 7: Team Governance (AIM-165)
+    # { "senior_approval_threshold_amount": 500, "senior_approval_threshold_percent": 20 }
+    governance_settings = Column(JSON, nullable=True) 
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
@@ -96,8 +100,62 @@ class Brand(Base):
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
     organization_id = Column(String, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True)
     
-    # Brand Identity (AIM-006)
-    name = Column(String, nullable=False)
+    # Hardened 2.0 Phase 2: Unified Seller Profile (AIM-001-005)
+    business_type = Column(String, nullable=True) # D2C | SaaS | Creator | Local
+    industry = Column(String, nullable=True) # Fashion | Dental | Real Estate etc.
+    primary_goal = Column(String, nullable=True) # Leads | Sales | Awareness
+    monthly_budget = Column(Float, nullable=True)
+    platform_preference = Column(String, nullable=True) # Meta | Google | Both
+    
+    # Context
+    description = Column(Text, nullable=True)
+    website_url = Column(String, nullable=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class BrandWisdom(Base):
+    """Hardened 2.0 Phase 5: Long-term cross-campaign learning logs."""
+
+    __tablename__ = "brand_wisdom"
+
+    id = Column(String, primary_key=True)
+    brand_id = Column(String, ForeignKey("brands.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    # "creative_performance" | "budget_efficiency" | "audience_behavior" | "manual_constraint"
+    insight_type = Column(String, nullable=False, index=True)
+    
+    content = Column(Text, nullable=False) # e.g. "Emoji-heavy hooks in Real Estate industry have 20% higher CTR"
+    
+    impact_score = Column(Integer, default=50) # 0-100 magnitude
+    
+    # { "industry": "Fashion", "goal": "Sales", "platform": "Meta" }
+    context_tags = Column(JSON, nullable=True)
+    
+    is_global = Column(Boolean, default=False) # Potential for cross-brand learning
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class CompetitorIntel(Base):
+    """Hardened 2.0 Phase 2: Real-world competitor research snapshots."""
+
+    __tablename__ = "competitor_intel"
+
+    id = Column(String, primary_key=True)
+    organization_id = Column(String, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+    brand_id = Column(String, ForeignKey("brands.id", ondelete="CASCADE"), nullable=True, index=True)
+    
+    competitor_name = Column(String, nullable=False)
+    competitor_url = Column(String, nullable=True)
+    
+    # The Intelligence Payload
+    positioning = Column(Text, nullable=True)
+    ad_hooks = Column(JSON, nullable=True) # List of hooks/copy identified
+    pricing_notes = Column(Text, nullable=True)
+    
+    risk_to_client = Column(Integer, default=50) # 0-100 score
+    last_researched_at = Column(DateTime(timezone=True), server_default=func.now())
     category = Column(String, nullable=True)
     description = Column(String, nullable=True)
     
@@ -124,6 +182,48 @@ class Brand(Base):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class EcomIntegration(Base):
+    """Hardened 2.0 Phase 6: E-commerce store connections (Shopify/Woo)."""
+
+    __tablename__ = "ecom_integrations"
+
+    id = Column(String, primary_key=True)
+    brand_id = Column(String, ForeignKey("brands.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    provider = Column(String, nullable=False) # shopify | woocommerce
+    store_url = Column(String, nullable=False)
+    
+    # Encrypted in production (simulated here)
+    access_token = Column(String, nullable=True) 
+    
+    last_sync_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Product(Base):
+    """Hardened 2.0 Phase 6: Synchronized products from external stores."""
+
+    __tablename__ = "products"
+
+    id = Column(String, primary_key=True)
+    brand_id = Column(String, ForeignKey("brands.id", ondelete="CASCADE"), nullable=False, index=True)
+    integration_id = Column(String, ForeignKey("ecom_integrations.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    external_id = Column(String, nullable=False, index=True) # Shopify/WC ID
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    price = Column(Numeric(12, 2), nullable=True)
+    currency = Column(String, default="USD")
+    
+    image_url = Column(String, nullable=True)
+    inventory_quantity = Column(Integer, default=0)
+    
+    # AI Control
+    is_sync_enabled = Column(Boolean, default=True)
+    last_processed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
 class Campaign(Base):
@@ -309,6 +409,11 @@ class OptimizationDirective(Base):
     execution_mode = Column(String, default="manual") # manual | autopilot
     risk_score = Column(Integer, default=0)
     confidence = Column(Integer, default=0)
+    
+    # Hardened 2.0 Phase 7: Multi-persona approval (AIM-165)
+    requires_senior_approval = Column(Boolean, default=False)
+    senior_approver_id = Column(String, ForeignKey("users.id"), nullable=True)
+    governance_notes = Column(Text, nullable=True)
     
     # Snapshot of campaign state (status, budget) BEFORE the change was applied
     original_state_snapshot = Column(JSON, nullable=True)

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { getGlobalAnalytics, type GlobalAnalytics } from "@/lib/api/analytics";
+import { BrandBrainWidget } from "@/components/dashboard/BrandBrainWidget";
+import { DashboardPipeline } from "@/components/dashboard/DashboardPipeline";
 
 export default function DashboardPage() {
   const [data, setData] = useState<GlobalAnalytics | null>(null);
@@ -29,6 +31,8 @@ export default function DashboardPage() {
             <span className="text-xs font-bold uppercase tracking-widest text-emerald-600">Live Optimization Active</span>
         </div>
       </header>
+      
+      <BrandBrainWidget />
 
       {/* Main Stats Grid */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -74,6 +78,11 @@ export default function DashboardPage() {
             <div className="absolute bottom-0 right-0 opacity-5 pointer-events-none">
                 <span className="text-[15rem] font-black leading-none">AI</span>
             </div>
+        </section>
+
+        {/* Brand Integration Pipeline */}
+        <section className="lg:col-span-3">
+            <DashboardPipeline />
         </section>
 
         {/* AI Recommendations */}

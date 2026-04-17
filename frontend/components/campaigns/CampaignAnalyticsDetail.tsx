@@ -29,6 +29,7 @@ function fmtUsd(n: number): string {
 export function CampaignAnalyticsDetail({ campaignId }: Props) {
   const [data, setData] = useState<CampaignAnalytics | null>(null);
   const [directives, setDirectives] = useState<OptimizationDirective[]>([]);
+  const [competitors, setCompetitors] = useState<any[]>([]);
   const [err, setErr] = useState<string | null>(null);
 
   const load = useCallback(() => {
@@ -41,6 +42,12 @@ export function CampaignAnalyticsDetail({ campaignId }: Props) {
         );
       void getOptimizationDirectives(campaignId)
         .then(setDirectives)
+        .catch(console.error);
+      
+      // Phase 2: Competitor Intel
+      void fetch(`/api/analytics/competitors/${campaignId}`)
+        .then(res => res.json())
+        .then(setCompetitors)
         .catch(console.error);
     });
   }, [campaignId]);
@@ -113,6 +120,44 @@ export function CampaignAnalyticsDetail({ campaignId }: Props) {
           changeTone="neutral"
         />
       </div>
+
+      <section>
+        <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">
+          Market Intelligence (Spy Agent)
+        </h2>
+        {competitors.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
+            Scanning rival ad libraries… Intelligence will appear here shortly.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {competitors.map((c) => (
+              <div key={c.id} className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-bold text-slate-800">{c.name}</h3>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                        c.threat_level > 70 ? 'bg-red-100 text-red-600' : 
+                        c.threat_level > 40 ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'
+                    }`}>
+                        Threat: {c.threat_level}/100
+                    </span>
+                </div>
+                <p className="text-xs text-slate-600 mb-3 leading-relaxed italic">"{c.positioning}"</p>
+                <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Observed Hooks:</p>
+                    <div className="flex flex-wrap gap-1">
+                        {(c.ad_hooks || []).slice(0, 3).map((hook: string, idx: number) => (
+                            <span key={idx} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[9px]">
+                                {hook}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section>
         <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">

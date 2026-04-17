@@ -118,6 +118,29 @@ def _persist_campaign_result(campaign_id: str, result: object) -> None:
                 if is_autopilot:
                     execute_autopilot_directive.apply_async((new_directive.id,), countdown=300)
 
+            # 2.0 Phase 5: Persist Brand Wisdom (Long-term Memory)
+            wisdom_output = agent_outputs.get("wisdom_extractor", {})
+            insights = wisdom_output.get("insights", [])
+            if insights and row.brand_id:
+                from models import BrandWisdom
+                for ins in insights:
+                    # Dedupe insight if content matches exactly to avoid bloat
+                    exists = db.query(BrandWisdom).filter(
+                        BrandWisdom.brand_id == row.brand_id,
+                        BrandWisdom.content == ins.get("content")
+                    ).first()
+                    if not exists:
+                        new_wisdom = BrandWisdom(
+                            id=str(uuid.uuid4()),
+                            brand_id=row.brand_id,
+                            insight_type=ins.get("insight_type", "strategic"),
+                            content=ins.get("content", ""),
+                            impact_score=ins.get("impact_score", 50),
+                            context_tags=ins.get("context_tags", {})
+                        )
+                        db.add(new_wisdom)
+                logger.info(f"MEMORY: Persisted {len(insights)} wisdom logs for brand {row.brand_id}")
+
             # Check for Manual Intervention Pause
             if signal == "PAUSE":
                 row.status = "awaiting_feedback"
@@ -611,5 +634,83 @@ def resume_campaign_iteration(campaign_id: str, manual_feedback: str):
 
     except Exception:
         logger.exception("resume_campaign_iteration failed for %s", campaign_id)
+    finally:
+        db.close()
+
+@celery.task
+def sync_ecom_products(integration_id: str):
+    """Hardened 2.0 Phase 6: Core sync engine for a specific store."""
+    from services.integrations.ecom_service import EcomService
+    from models import EcomIntegration, Product
+    import datetime
+    
+    db = SessionLocal()
+    try:
+        integration = db.query(EcomIntegration).filter(EcomIntegration.id == integration_id).first()
+        if not integration: return
+
+        # Fetch from platform (mocked/real)
+        raw_products = EcomService.process_sync(
+            provider=integration.provider,
+            store_url=integration.store_url,
+            access_token=integration.access_token
+        )
+
+        for p in raw_products:
+            # Upsert logic
+            product = db.query(Product).filter(
+                Product.integration_id == integration_id,
+                Product.external_id == str(p["id"])
+            ).first()
+
+            if not product:
+                product = Product(
+                    id=str(uuid.uuid4()),
+                    brand_id=integration.brand_id,
+                    integration_id=integration_id,
+                    external_id=str(p["id"])
+                )
+                db.add(product)
+
+            variant = p.get("variants", [{}])[0]
+            product.title = p.get("title")
+            product.description = p.get("body_html")
+            product.price = variant.get("price")
+            product.inventory_quantity = variant.get("inventory_quantity", 0)
+            product.image_url = p.get("images", [{}])[0].get("src")
+            product.last_processed_at = datetime.datetime.now(datetime.timezone.utc)
+
+        integration.last_sync_at = datetime.datetime.now(datetime.timezone.utc)
+        db.commit()
+    finally:
+        db.close()
+
+@celery.task
+def inventory_guard_tick():
+    """Hardened 2.0 Phase 6: Automated guardrail to pause ads for OOS items."""
+    from models import Product, Campaign
+    db = SessionLocal()
+    try:
+        # 1. Identify Out of Stock products that are enabled for sync
+        oos_products = db.query(Product).filter(
+            Product.inventory_quantity <= 0,
+            Product.is_sync_enabled == True
+        ).all()
+
+        for product in oos_products:
+            # 2. Find campaigns mentioning this product or brand
+            # Real implementation: campaign.input would contain specific mapping.
+            # Here: we find active campaigns for this brand.
+            camps = db.query(Campaign).filter(
+                Campaign.brand_id == product.brand_id,
+                Campaign.status == "active"
+            ).all()
+            
+            for c in camps:
+                logger.warning(f"INVENTORY GUARD: Pausing campaign {c.id} - Product {product.title} is OUT OF STOCK.")
+                c.status = "paused"
+                c.orchestration_metadata["guardrail_reason"] = f"Product {product.title} out of stock."
+        
+        db.commit()
     finally:
         db.close()
