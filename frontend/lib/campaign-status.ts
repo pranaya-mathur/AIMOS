@@ -10,11 +10,14 @@ export const STATUS_LABEL: Record<string, string> = {
   completed: "Completed",
   failed: "Failed",
   rejected: "Rejected",
+  awaiting_feedback: "Feedback Required",
 };
 
 /** Light-theme badges (Bubble-style soft pills). */
 export function statusBadgeClass(status: string): string {
   switch (status) {
+    case "awaiting_feedback":
+      return "bg-violet-600 text-white ring-2 ring-violet-500 shadow-lg animate-pulse";
     case "completed":
       return "bg-emerald-100 text-emerald-900 ring-1 ring-emerald-200/80";
     case "processing":

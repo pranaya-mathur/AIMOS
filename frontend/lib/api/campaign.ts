@@ -20,6 +20,11 @@ export type CampaignResponse = {
   input: Record<string, unknown>;
   output: unknown;
   celery_task_id: string | null;
+  orchestration_metadata?: {
+    iterations: number;
+    history: string[];
+    refinement_context?: string;
+  };
 };
 
 export async function listCampaigns(

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getBrand } from "@/lib/api/brand";
 
 const STEPS = [
   { id: "info", title: "General Info", description: "Name and core focus of the campaign." },
@@ -15,16 +16,33 @@ export default function NewCampaignPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: "Growth Blitz Q2",
+    name: "", // Will be set on load
     objective: "leads",
     platform: "both",
-    total_budget: 2500,
+    total_budget: 1000,
     schedule_start: new Date().toISOString().split("T")[0],
     schedule_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     input: {
-      brief: "Targeting tech-savvy professionals for our SaaS platform.",
+      brief: "",
     }
   });
+
+  useEffect(() => {
+    getBrand().then((brand) => {
+        if (brand.name) {
+            setFormData(prev => ({
+                ...prev,
+                name: `${brand.name} Launch - ${new Date().toLocaleDateString()}`,
+                objective: brand.marketing_goal?.toLowerCase() || "leads",
+                platform: (brand.platform_preference?.length || 0) > 1 ? "both" : (brand.platform_preference?.[0] || "both"),
+                total_budget: brand.monthly_budget || 2500,
+                input: {
+                    brief: `Driving ${brand.marketing_goal || "growth"} for our ${brand.industry || "business"} in the ${brand.category || "market"} sector. Focus on ${brand.target_audience?.interests || "target keywords"}.`
+                }
+            }));
+        }
+    });
+  }, []);
 
   const update = (key: string, value: any) => {
     setFormData((prev) => ({ ...prev, [key]: value }));

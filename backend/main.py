@@ -11,7 +11,31 @@ from core.logging_config import configure_logging
 from db import Base, apply_schema_patches, engine
 import models  # noqa: F401  — register ORM models for metadata.create_all
 from openapi_tags import OPENAPI_TAGS
-from routers import admin, agents, analytics, auth, billing, brand, campaign, creatives, health, job, launch, leads, media, onboarding, org, usage, webhooks
+from routers import (
+    admin,
+    agents,
+    analytics,
+    auth,
+    billing,
+    brand,
+    campaign,
+    creatives,
+    health,
+    job,
+    landing_pages,
+    launch,
+    leads,
+    media,
+    onboarding,
+    org,
+    public,
+    usage,
+    webhooks,
+    team,
+    orchestration,
+)
+
+app.include_router(orchestration.router, prefix="/orchestration", tags=["Orchestration"])
 
 import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
@@ -102,6 +126,8 @@ app.include_router(brand.router, prefix="/brand", tags=["brand"])
 app.include_router(media.router, prefix="/media", tags=["media"])
 app.include_router(onboarding.router, prefix="/onboarding", tags=["onboarding"])
 app.include_router(leads.router, prefix="/leads", tags=["leads"])
+app.include_router(landing_pages.router, prefix="/landing-pages", tags=["landing_pages"])
+app.include_router(public.router, prefix="/p", tags=["public"])
 app.include_router(org.router, prefix="/org", tags=["organization"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])

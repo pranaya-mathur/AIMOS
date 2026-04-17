@@ -61,26 +61,60 @@ export function SettingsView() {
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold text-slate-900">Shortcuts</h2>
-        <ul className="mt-3 space-y-2 text-sm text-violet-600">
-          <li>
-            <Link href="/billing" className="hover:text-violet-700">
-              Billing & plans
-            </Link>
+        <h2 className="text-lg font-semibold text-slate-900">Agency Branding</h2>
+        <div className="mt-4 space-y-4">
+             <div className="space-y-1">
+                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Site Name</label>
+                 <input 
+                    type="text" 
+                    placeholder="AIMOS Enterprise"
+                    className="w-full rounded-2xl bg-slate-50 border border-slate-100 p-4 text-sm font-medium" 
+                 />
+             </div>
+             <div className="space-y-1">
+                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Logo URL</label>
+                 <input 
+                    type="text" 
+                    placeholder="https://..."
+                    className="w-full rounded-2xl bg-slate-50 border border-slate-100 p-4 text-sm font-medium" 
+                 />
+             </div>
+             <div className="flex items-center gap-4">
+                 <div className="space-y-1 flex-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Primary Brand Color</label>
+                    <input 
+                        type="color" 
+                        className="w-full h-12 rounded-2xl cursor-pointer" 
+                    />
+                 </div>
+                 <button className="h-12 px-8 mt-5 rounded-2xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest">Save Branding</button>
+             </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-semibold text-slate-900">Governance & Security</h2>
+        <ul className="mt-4 space-y-2 text-sm text-slate-600">
+          <li className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100">
+             <div>
+                <span className="block font-bold">Multi-Seat Team</span>
+                <span className="text-[10px] text-slate-400 font-medium">Manage members and seats</span>
+             </div>
+             <Link href="/settings/team" className="text-violet-600 font-bold hover:underline">Manage Team →</Link>
           </li>
-          <li>
-            <Link href="/analytics" className="hover:text-violet-700">
-              Analytics
-            </Link>
+          <li className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100">
+             <span>Enterprise Audit Trail</span>
+             <Link href="/settings/audit" className="text-violet-600 font-bold hover:underline">View History →</Link>
           </li>
           <li>
             <a
               href={swaggerUrl()}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-violet-700"
+              className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 text-slate-600 hover:text-violet-600"
             >
-              API docs (Swagger)
+              <span>API docs (Swagger)</span>
+              <span className="opacity-40">↗</span>
             </a>
           </li>
         </ul>

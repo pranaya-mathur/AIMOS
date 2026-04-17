@@ -13,6 +13,7 @@ import {
 } from "@/lib/api/campaign";
 import { STATUS_LABEL, statusBadgeClass } from "@/lib/campaign-status";
 import { mapAgentStepsFromCampaign } from "@/lib/pipeline/map-agent-steps";
+import { resumeCampaign } from "@/lib/api/orchestration";
 
 type Props = { campaignId: string };
 
@@ -21,6 +22,7 @@ export function CampaignDetail({ campaignId }: Props) {
   const [c, setC] = useState<CampaignResponse | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState("");
 
   const load = useCallback(() => {
     setErr(null);
@@ -226,6 +228,74 @@ export function CampaignDetail({ campaignId }: Props) {
           <p className="mt-3 text-xs text-yellow-200/90">
             Job running… task <code className="text-slate-600">{c.celery_task_id}</code>
           </p>
+        )}
+        
+        {c.status === "awaiting_feedback" && (
+           <div className="mt-6 p-6 bg-violet-600 rounded-3xl shadow-2xl border-2 border-violet-400">
+               <div className="flex items-center gap-3 mb-4">
+                   <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
+                   <h3 className="text-sm font-black uppercase tracking-widest text-white">Human Intervention Required</h3>
+               </div>
+               <p className="text-sm text-violet-100 mb-6 font-medium leading-relaxed">
+                   The AI Orchestrator has paused for your guidance. 
+                   {c.orchestration_metadata?.refinement_context && (
+                       <span className="block mt-2 p-3 bg-violet-700/50 rounded-xl border border-violet-500/50 italic text-violet-200">
+                           AI Reasoning: {c.orchestration_metadata.refinement_context}
+                       </span>
+                   )}
+               </p>
+               <div className="space-y-4">
+                   <textarea 
+                        value={feedback}
+                        onChange={(e) => setFeedback(e.target.value)}
+                        placeholder="Provide your guidance to the AI (e.g., 'Make the tone more aggressive and focus on security benefits')..."
+                        className="w-full bg-violet-800/50 border-none rounded-2xl p-4 text-white text-sm font-medium placeholder:text-violet-300 focus:ring-2 focus:ring-white h-32"
+                   />
+                   <button 
+                        disabled={!!busy || !feedback.trim()}
+                        onClick={() => act("resume", () => resumeCampaign(c.id, feedback))}
+                        className="w-full py-4 rounded-2xl bg-white text-[10px] font-black uppercase tracking-widest text-violet-600 shadow-xl hover:scale-[1.02] transition-transform disabled:opacity-50"
+                   >
+                       {busy === "resume" ? "Resuming..." : "Resume AI Loop →"}
+                   </button>
+               </div>
+           </div>
+        )}
+
+        {/* Hardened 2.0: Predictive Performance Outlook (Option A) */}
+        {ao?.predictive_benchmarker && (
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                {(ao.predictive_benchmarker as any).predicted_ctr && (
+                    <div className="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Predicted CTR</span>
+                        <div className="mt-2 text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-indigo-600">
+                            {(ao.predictive_benchmarker as any).predicted_ctr}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500 font-medium">Industry Avg: {(ao.predictive_benchmarker as any).industry_comparison}</div>
+                    </div>
+                )}
+                {(ao.predictive_benchmarker as any).predicted_cpl && (
+                    <div className="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Predicted CPL</span>
+                        <div className="mt-2 text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600">
+                            {(ao.predictive_benchmarker as any).predicted_cpl}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500 font-medium">Outlook: {(ao.predictive_benchmarker as any).performance_outlook}</div>
+                    </div>
+                )}
+                <div className="p-6 bg-slate-900 rounded-3xl shadow-xl flex flex-col justify-center">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Confidence Score</span>
+                    <div className="mt-2 flex items-end gap-2 text-3xl font-bold text-white">
+                        {(ao.predictive_benchmarker as any).confidence_score}%
+                        <div className="mb-1 w-12 h-1 bg-slate-800 rounded-full overflow-hidden">
+                            <div 
+                                className="h-full bg-violet-500" 
+                                style={{ width: `${(ao.predictive_benchmarker as any).confidence_score}%` }}
+                            ></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         )}
       </section>
 

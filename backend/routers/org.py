@@ -62,3 +62,31 @@ def update_whitelabel_config(
     )
     
     return {"ok": True}
+
+@router.get("/audit-logs")
+def get_audit_logs(
+    db: Session = Depends(get_db),
+    user: Optional[User] = Depends(get_agency_user),
+    limit: int = 50
+):
+    """Fetch recent audit events for the organization."""
+    if not user or not user.organization_id:
+        raise HTTPException(status_code=403, detail="Organization required")
+        
+    from models import AuditLog
+    logs = db.query(AuditLog)\
+        .filter(AuditLog.organization_id == user.organization_id)\
+        .order_by(AuditLog.timestamp.desc())\
+        .limit(limit)\
+        .all()
+        
+    return [
+        {
+            "id": l.id,
+            "user_id": l.user_id,
+            "action": l.action,
+            "resource_id": l.resource_id,
+            "metadata": l.metadata_json,
+            "timestamp": l.timestamp.isoformat()
+        } for l in logs
+    ]

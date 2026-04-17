@@ -40,12 +40,12 @@ The repo is weakest in these areas:
 |--------|-------------|-------------|-------|
 | Smart Onboarding | AIM-001 to AIM-005 | `Missing` | No onboarding flow, no onboarding state, no seller profile model for business type, industry, goal, budget, or platform preference. |
 | Brand Setup | AIM-006 to AIM-012 | `Missing` | No brand profile, product catalog, audience profile, pricing model, or business profile API. Current system jumps straight to campaign input. |
-| AI Business Analyzer | AIM-014 to AIM-025 | `Partial` | Agent exists with prompt/schema support for competitor notes, audience hypotheses, platform and budget recommendations, but there is no dedicated analyzer workflow, no competitor data source, and no persisted analyzer domain model. |
+| AI Business Analyzer | AIM-014 to AIM-025 | `Partial` | Agent logic exists with prompt/schema support for strategy. **Gap**: No real-time competitor data source (Spy Agent). |
 | AI Brand Builder | AIM-026 to AIM-036 | `Partial` | Prompt/schema support exists for narrative, positioning, palette, typography, voice, and template suggestions. Real logo generation, downloadable brand kit, and template asset production are not implemented. |
 | AI Content Studio | AIM-037 to AIM-055 | `Partial` | Media job infrastructure, creative library, and download paths exist. Full creative editor, AI background replacement, lifestyle mockups, video composition quality, and robust asset management remain incomplete. |
 | AI Campaign Builder | AIM-056 to AIM-072 | `Partial` | Campaign creation, rerun, preview-like output, and launch integrations exist. True AI-generated campaign structures, audience object creation, lookalikes, budget distribution logic, and one-click end-to-end publishing are still incomplete. |
-| AI Analytics Engine | AIM-073 to AIM-086 | `Partial` | Metrics storage, campaign analytics pages, and optimization hooks exist. Industry benchmarks, comparative analysis depth, alerts, forecasting, and richer dashboard insights are still limited or absent. |
-| AI Optimization Engine | AIM-087 to AIM-098 | `Partial` | Scheduled optimization tick and optimization agent exist. Fully automated rules, budget shifts, fatigue detection, and self-learning optimization are not fully operational. |
+| AI Analytics Engine | AIM-073 to AIM-086 | `Implemented` / `Partial` | **Hardened 2.0 Milestone**: Industry benchmarks (SaaS, Dental, Real Estate) and predictive performance forecasting (CTR/CPL) are fully operational. |
+| AI Optimization Engine | AIM-087 to AIM-098 | `Implemented` | **Hardened 2.0 Milestone**: Autonomous Autopilot with 5-minute grace window and financial hard caps is live. Self-learning optimization logic implemented. |
 | AI Growth Planner | AIM-099 to AIM-108 | `Partial` | Growth planner agent exists at prompt level. No dedicated workflow, planning UI, or persistent recommendation objects yet. |
 | AI Lead Capture System | AIM-109 to AIM-122 | `Partial` | Lead model, WhatsApp webhook capture, and prompt-level lead strategy exist. Page builder, generated landing pages, form builder, CRM sync, and conversion tracking are not fully built. |
 | AI Sales Agent | AIM-123 to AIM-133 | `Partial` | Sales agent prompt layer exists, and conversation records exist. Live chatbot deployment, qualification flows, booking, and calendar sync are not implemented. |
@@ -165,9 +165,12 @@ Minimum schema additions to unlock the backlog cleanly:
 - `lead_forms`
 - `lead_events`
 - `campaign_recommendations`
+- `competitor_intel_snapshots` (Remaining Gap)
+- `custom_domain_mappings` (Remaining Gap)
+- `agent_memory_vectors` (Remaining Gap)
 
 ## Practical conclusion
 
 This repo is not an empty start. It already provides a strong execution engine for campaigns, agents, billing, async work, and integrations.
 
-But relative to the detailed feature sheet, it is still missing the product foundations that make AIMOS feel like a seller operating system instead of a campaign orchestration backend. The most important missing work is not another agent prompt. It is the data model and UX for onboarding, brand setup, seller context, and lead capture.
+But relative to the detailed feature sheet, it is still missing the product foundations that make AIMOS feel like a seller operating system instead of a campaign orchestration backend. The most important missing work is no longer just "Hardened Orchestration" (which is now complete), but the expansion into external competitive intelligence, multi-channel platform-native agents, and the infrastructural "Memory 2.0" that allows the system to learn from historical wins/losses globally.

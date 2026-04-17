@@ -15,6 +15,38 @@ class Organization(Base):
     # Milestone 5: Whitelabeling (AIM-170)
     whitelabel_config = Column(JSON, nullable=True) # { "logo_url": "...", "primary_color": "...", "site_name": "..." }
     
+    # Enterprise Seats (AIM-160)
+    monthly_seat_quota = Column(Integer, default=1, server_default="1")
+    
+    # Hardened 2.0 Orchestration Controls (AIM-200)
+    max_orchestration_iterations = Column(Integer, default=3, server_default="3")
+    manual_intervention_enabled = Column(Boolean, default=True, server_default="true")
+    
+    # Hardened 2.0 Option B: Autonomous Autopilot (AIM-220)
+    autopilot_enabled = Column(Boolean, default=False, server_default="false")
+    autopilot_max_shift_percent = Column(Float, default=5.0, server_default="5.0")
+    autopilot_max_shift_amount = Column(Float, default=100.0, server_default="100.0")
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class TeamInvite(Base):
+    """Track pending team invitations (AIM-160)."""
+
+    __tablename__ = "team_invites"
+
+    id = Column(String, primary_key=True)
+    organization_id = Column(String, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+    email = Column(String, nullable=False, index=True)
+    role = Column(String, default="agency_client") # agency_client | end_customer
+    
+    status = Column(String, default="pending") # pending | accepted | expired
+    token = Column(String, unique=True, index=True)
+    
+class ProcessedStripeEvent(Base):
+    """Idempotency log for Stripe webhooks (AIM-155)."""
+    __tablename__ = "processed_stripe_events"
+    id = Column(String, primary_key=True) # Stripe Event ID (evt_xxx)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
@@ -85,7 +117,11 @@ class Brand(Base):
     marketing_goal = Column(String, nullable=True) # Sales | Leads | Awareness
     monthly_budget = Column(Numeric(12, 2), nullable=True)
     platform_preference = Column(JSON, nullable=True) # ["meta", "google"]
-    
+
+    # AI Persisted Strategy (Milestone 1/2 Integration)
+    ai_generated_kit = Column(JSON, nullable=True) # { "brand_narrative": "...", "brand_voice": "...", "color_palette": [...] }
+    analysis_report = Column(JSON, nullable=True)  # Detailed competitor / audience analysis
+
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
@@ -111,6 +147,10 @@ class Campaign(Base):
     total_budget = Column(Float, default=0.0)
     schedule_start = Column(DateTime, nullable=True)
     schedule_end = Column(DateTime, nullable=True)
+    
+    # Hardened 2.0 Orchestration (AIM-200)
+    # { "iterations": 2, "history": ["content_studio", "optimization_engine", ...], "reasoning_log": ["..." ] }
+    orchestration_metadata = Column(JSON, nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -162,6 +202,33 @@ class MediaAsset(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
+class AdCreative(Base):
+    """Structured ad copy variations (AIM-040)."""
+
+    __tablename__ = "ad_creatives"
+
+    id = Column(String, primary_key=True)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    campaign_id = Column(String, ForeignKey("campaigns.id", ondelete="SET NULL"), nullable=True, index=True)
+    
+    headline = Column(String, nullable=True)
+    body_copy = Column(String, nullable=True)
+    cta_text = Column(String, nullable=True)
+    
+    # Optional link to a specific generated image/video
+    media_asset_id = Column(String, ForeignKey("media_assets.id", ondelete="SET NULL"), nullable=True)
+    
+    status = Column(String, default="draft")  # draft | approved
+    is_favorite = Column(String, default="false", server_default="false")
+    
+    # Hardened 2.0 Predictive Forecasting (AIM-210)
+    # { "predicted_ctr": "...", "predicted_cpl": "...", "confidence_score": 85, "outlook": "high" }
+    predicted_metrics = Column(JSON, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
 class Lead(Base):
     __tablename__ = "leads"
 
@@ -177,6 +244,10 @@ class Lead(Base):
     score = Column(Integer, default=0)
     intent = Column(String, nullable=True)
     sentiment = Column(String, nullable=True)
+    
+    # Conversion Attribution (AIM-118, AIM-119)
+    landing_page_id = Column(String, ForeignKey("landing_pages.id", ondelete="SET NULL"), nullable=True, index=True)
+    source = Column(String, nullable=True) # e.g. "facebook_ad", "organic", "google"
     
     lead_metadata = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -207,6 +278,78 @@ class CampaignMetric(Base):
     clicks = Column(Integer, default=0)
     conversions = Column(Integer, default=0)
 
+    # Optional creative attribution
+    creative_id = Column(String, ForeignKey("ad_creatives.id", ondelete="SET NULL"), nullable=True, index=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     __table_args__ = (Index("ix_metrics_campaign_day", "campaign_id", "day"),)
+
+
+class OptimizationDirective(Base):
+    """Actionable AI suggestions for growth (AIM-060)."""
+
+    __tablename__ = "optimization_directives"
+
+    id = Column(String, primary_key=True)
+    campaign_id = Column(String, ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    
+    directive_type = Column(String, nullable=False) # pause | scale | shift | refresh
+    description = Column(String, nullable=False)
+    
+    # { "budget_change": 0.2, "target_status": "PAUSED", "reason": "..." }
+    suggested_payload = Column(JSON, nullable=True)
+    
+    status = Column(String, default="pending") # pending | scheduled | applied | dismissed
+    applied_at = Column(DateTime(timezone=True), nullable=True)
+    scheduled_at = Column(DateTime(timezone=True), nullable=True)
+    
+    # Hardened 2.0 Autopilot Context (AIM-220)
+    execution_mode = Column(String, default="manual") # manual | autopilot
+    risk_score = Column(Integer, default=0)
+    confidence = Column(Integer, default=0)
+    
+    # Snapshot of campaign state (status, budget) BEFORE the change was applied
+    original_state_snapshot = Column(JSON, nullable=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class LandingPage(Base):
+    """Sovereign conversion pages (AIM-109)."""
+
+    __tablename__ = "landing_pages"
+
+    id = Column(String, primary_key=True)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    organization_id = Column(String, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True)
+    
+    slug = Column(String, unique=True, nullable=False, index=True)
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    
+    # Structure: { "theme": "...", "sections": [{ "type": "hero", "content": {...} }, ...] }
+    content_json = Column(JSON, nullable=False, default=dict)
+    
+    is_published = Column(String, default="false", server_default="false")
+    views_count = Column(Integer, default=0)
+    conversions_count = Column(Integer, default=0)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class LeadForm(Base):
+    """Custom lead capture forms (AIM-112)."""
+
+    __tablename__ = "lead_forms"
+
+    id = Column(String, primary_key=True)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    title = Column(String, nullable=False)
+    # Schema: [{ "label": "Full Name", "type": "text", "required": true, "key": "full_name" }, ...]
+    fields_json = Column(JSON, nullable=False, default=list)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

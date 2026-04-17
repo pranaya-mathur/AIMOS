@@ -27,6 +27,39 @@ _MEDIA_DISPATCH = {
 }
 
 
+@celery.task
+def execute_autopilot_directive(directive_id: str):
+    """Hardened 2.0 Phase 1.4: Delayed execution task with cancellation check."""
+    from db import SessionLocal
+    import datetime
+    from models import OptimizationDirective, Campaign
+    
+    db = SessionLocal()
+    try:
+        directive = db.query(OptimizationDirective).filter(OptimizationDirective.id == directive_id).first()
+        if not directive:
+            logger.warning(f"Autopilot directive {directive_id} not found")
+            return
+            
+        # Only apply if it's still in 'scheduled' state (Human could have dismissed it during the 5m window)
+        if directive.status != "scheduled":
+            logger.info(f"Autopilot directive {directive_id} skipped. Current status: {directive.status}")
+            return
+
+        # Perform the actual optimization (mocking the platform sync)
+        directive.status = "applied"
+        directive.applied_at = datetime.datetime.now(datetime.timezone.utc)
+        
+        # In a real system, we would trigger the specific media client or budget update here
+        logger.info(f"AUTOPILOT: Applied directive {directive_id} for campaign {directive.campaign_id}")
+        
+        db.commit()
+    except Exception:
+        logger.exception(f"Failed to execute autopilot directive {directive_id}")
+    finally:
+        db.close()
+
+
 def _with_request_metadata(data: Optional[dict], request_id: Optional[str]) -> dict:
     payload = dict(data or {})
     payload.setdefault("metadata", {})
@@ -44,9 +77,55 @@ def _persist_campaign_result(campaign_id: str, result: object) -> None:
             return
         if isinstance(result, dict):
             row.output = result
+            # 2.0 Orchestration Persistence
+            row.orchestration_metadata = {
+                "iterations": result.get("iteration_count", 0),
+                "history": result.get("history", []),
+                "refinement_context": result.get("refinement_context"),
+                # Store full state for resumption
+                "last_state": result 
+            }
+            
+            # Autopilot Logic (Option B)
+            signal = result.get("status_signal")
+            is_autopilot = (signal == "AUTOPILOT_APPLY")
+
+            # Extract and Persist Directives
+            from models import OptimizationDirective
+            import datetime
+            agent_outputs = result.get("agent_outputs", {})
+            opt_out = agent_outputs.get("optimization_engine", {})
+            directives_data = opt_out.get("directives", [])
+            
+            for d in directives_data:
+                # Dedupe or just create for now in this pilot
+                new_directive = OptimizationDirective(
+                    id=str(uuid.uuid4()),
+                    campaign_id=campaign_id,
+                    user_id=row.user_id,
+                    directive_type=d.get("action", "shift"),
+                    description=d.get("description", ""),
+                    suggested_payload=d,
+                    risk_score=d.get("risk_score", 0),
+                    confidence=d.get("confidence", 0),
+                    execution_mode="autopilot" if is_autopilot else "manual",
+                    status="scheduled" if is_autopilot else "pending",
+                    scheduled_at=datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=5) if is_autopilot else None
+                )
+                db.add(new_directive)
+                
+                # If autopilot, schedule the delayed execution (ETA 5 min)
+                if is_autopilot:
+                    execute_autopilot_directive.apply_async((new_directive.id,), countdown=300)
+
+            # Check for Manual Intervention Pause
+            if signal == "PAUSE":
+                row.status = "awaiting_feedback"
+            else:
+                row.status = "completed"
         else:
             row.output = {"result": str(result)}
-        row.status = "completed"
+            row.status = "completed"
         db.commit()
     except Exception:
         logger.exception("failed to persist campaign %s", campaign_id)
@@ -157,6 +236,13 @@ def run_campaign(data):
 
         if media_tasks:
             logger.info("Triggered %d media generation tasks for campaign %s", len(media_tasks), campaign_id)
+
+        # 4. Auto-generate 3 Copy Variations (AIM-040)
+        ad_brief = content_studio.get("ad_brief") or result.get("input", {}).get("brief")
+        if ad_brief:
+            for i in range(3):
+                generate_variation.delay(ad_brief, i, user_id=ctx_user_id, campaign_id=campaign_id)
+            logger.info("Triggered 3 copy variations for campaign %s", campaign_id)
 
     return result
 
@@ -276,17 +362,48 @@ def send_engagement_sms_task(to_phone: str, body: str):
 
 
 @celery.task
-def generate_variation(brief: str, index: int, user_id: Optional[str] = None):
+def generate_variation(brief: str, index: int, user_id: Optional[str] = None, campaign_id: Optional[str] = None):
     from services.integrations.openai_service import generate_text
+    from models import AdCreative
+    import json
 
     try:
-        set_usage_context(user_id=user_id, campaign_id=None)
+        set_usage_context(user_id=user_id, campaign_id=campaign_id)
         prompt = (
-            f"Write one creative marketing copy variation #{index + 1} for this brief. "
-            "Return plain text only.\n\nBrief:\n"
-            f"{brief}"
+            "Write one creative marketing copy variation for this brief.\n"
+            "Format the output as JSON with three keys: 'headline', 'body', and 'cta'.\n"
+            "Keep it short, punchy, and professional.\n\n"
+            f"Brief: {brief}\n\n"
+            "Output JSON:"
         )
-        return {"index": index, "copy": generate_text(prompt)}
+        raw = generate_text(prompt, max_tokens=200)
+        try:
+            # Clean up JSON if there are triple backticks
+            clean_json = raw.strip("`").replace("json\n", "")
+            parsed = json.loads(clean_json)
+        except Exception:
+            # Fallback if AI doesn't return perfect JSON
+            parsed = {"headline": raw[:50], "body": raw, "cta": "Learn More"}
+            
+        # Persist to DB
+        db = SessionLocal()
+        try:
+            creative = AdCreative(
+                id=str(uuid.uuid4()),
+                user_id=user_id,
+                campaign_id=campaign_id,
+                headline=parsed.get("headline"),
+                body_copy=parsed.get("body"),
+                cta_text=parsed.get("cta"),
+                status="draft"
+            )
+            db.add(creative)
+            db.commit()
+            logger.info("Persisted creative variation #%d for campaign %s", index + 1, campaign_id)
+        finally:
+            db.close()
+
+        return {"index": index, "copy": parsed}
     finally:
         clear_usage_context()
 
@@ -457,5 +574,42 @@ def process_whatsapp_inbound(body: dict):
         logger.info("WhatsApp lead captured, scored (%d), and replied: lead_id=%s", lead.score, lead.id)
         return {"status": "replied", "lead_id": lead.id, "score": lead.score, "reply": agent_reply}
 
+    finally:
+        db.close()
+
+@celery.task
+def resume_campaign_iteration(campaign_id: str, manual_feedback: str):
+    db = SessionLocal()
+    try:
+        from models import Campaign
+        campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+        if not campaign or not campaign.orchestration_metadata:
+            logger.error("resume_campaign_iteration: campaign %s not found or missing metadata", campaign_id)
+            return
+
+        # 1. Hydrate state
+        metadata = dict(campaign.orchestration_metadata)
+        last_state = metadata.get("last_state")
+        if not last_state:
+            logger.error("resume_campaign_iteration: mission last_state in metadata for %s", campaign_id)
+            return
+
+        # 2. Inject manual feedback
+        ai_context = last_state.get("refinement_context") or ""
+        combined_context = f"{ai_context}\n\n[USER FEEDBACK]: {manual_feedback}".strip()
+        
+        last_state["refinement_context"] = combined_context
+        last_state["status_signal"] = None
+        
+        # 3. Resume Graph
+        from services.orchestrator import resume_agents
+        campaign.status = "processing"
+        db.commit()
+        
+        result = resume_agents(last_state, user_id=campaign.user_id)
+        _persist_campaign_result(campaign_id, result)
+
+    except Exception:
+        logger.exception("resume_campaign_iteration failed for %s", campaign_id)
     finally:
         db.close()

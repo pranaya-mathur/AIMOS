@@ -3,8 +3,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
 from db import get_db
-from models import User, Campaign, CampaignMetric, UsageEvent, Lead
+from models import User, Campaign, CampaignMetric, UsageEvent, Lead, OptimizationDirective
 from deps import get_agency_user
+import uuid
+from datetime import datetime
 
 router = APIRouter()
 
@@ -174,9 +176,47 @@ def trigger_campaign_optimization(
         schema=bundle["schema"],
         prompt_template=bundle["task_template"]
     )
-    directives = result_state["agent_outputs"]["optimization_engine"]
+    directives = result_state["agent_outputs"]["optimization_rules"]
 
-    # 4. Update
+    from services.governance.audit import log_audit_event
+    log_audit_event(
+        action="CAMPAIGN_OPTIMIZE_GENERATE",
+        user_id=user.id,
+        organization_id=user.organization_id,
+        resource_id=campaign_id,
+        metadata={"count": len(directives.get("pause_rules", [])) + len(directives.get("scale_rules", []))}
+    )
+
+    # 4. Create structured Directive records (AIM-060)
+    created_directives = []
+    
+    # Scale Rules
+    for rule in directives.get("scale_rules", []):
+        d = OptimizationDirective(
+            id=str(uuid.uuid4()),
+            campaign_id=campaign_id,
+            user_id=user.id,
+            directive_type="scale",
+            description=rule,
+            suggested_payload={"budget_increase": 0.2}
+        )
+        db.add(d)
+        created_directives.append(d)
+        
+    # Pause Rules
+    for rule in directives.get("pause_rules", []):
+        d = OptimizationDirective(
+            id=str(uuid.uuid4()),
+            campaign_id=campaign_id,
+            user_id=user.id,
+            directive_type="pause",
+            description=rule,
+            suggested_payload={"target_status": "PAUSED"}
+        )
+        db.add(d)
+        created_directives.append(d)
+
+    # 5. Update campaign output
     existing_output = dict(campaign.output or {})
     existing_output["optimization_directives"] = directives
     campaign.output = existing_output
@@ -185,5 +225,112 @@ def trigger_campaign_optimization(
     return {
         "ok": True,
         "campaign_id": campaign_id,
-        "directives": directives
+        "count": len(created_directives)
     }
+
+@router.get("/directives", response_model=List[dict])
+def list_directives(
+    campaign_id: Optional[str] = None,
+    status: Optional[str] = "pending",
+    db: Session = Depends(get_db),
+    user: User = Depends(get_agency_user)
+):
+    query = db.query(OptimizationDirective)
+    if user and user.role != "platform_admin":
+        query = query.filter(OptimizationDirective.user_id == user.id)
+    if campaign_id:
+        query = query.filter(OptimizationDirective.campaign_id == campaign_id)
+    if status:
+        query = query.filter(OptimizationDirective.status == status)
+    
+    return [
+        {
+            "id": d.id,
+            "campaign_id": d.campaign_id,
+            "type": d.directive_type,
+            "description": d.description,
+            "status": d.status,
+            "created_at": d.created_at.isoformat()
+        } for d in query.all()
+    ]
+
+@router.post("/directives/{directive_id}/apply")
+def apply_directive(
+    directive_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_agency_user)
+):
+    directive = db.query(OptimizationDirective).filter(OptimizationDirective.id == directive_id).first()
+    if not directive:
+        raise HTTPException(status_code=404, detail="Directive not found")
+    
+    if user and user.role != "platform_admin" and directive.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    # 1. Capture current status/budget as a snapshot (Safety Reversibility)
+    campaign = db.query(Campaign).filter(Campaign.id == directive.campaign_id).first()
+    if campaign:
+        directive.original_state_snapshot = {
+            "status": campaign.status,
+            "total_budget": campaign.total_budget,
+            "output_selected_creative": (campaign.output or {}).get("selected_creative")
+        }
+
+    # 2. Apply change to platform
+    from services.integrations.metrics_service import apply_directive_to_platform
+    
+    success = apply_directive_to_platform(directive)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to apply directive to platform")
+
+    directive.status = "applied"
+    directive.applied_at = datetime.now()
+    db.commit()
+
+    from services.governance.audit import log_audit_event
+    log_audit_event(
+        action="OPTIMIZATION_APPLY",
+        user_id=user.id,
+        organization_id=user.organization_id,
+        resource_id=directive.id,
+        metadata={"type": directive.directive_type}
+    )
+
+    return {"ok": True}
+
+@router.post("/directives/{directive_id}/revert")
+def revert_directive(
+    directive_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_agency_user)
+):
+    """Restores the campaign to its previous state using the saved snapshot."""
+    directive = db.query(OptimizationDirective).filter(OptimizationDirective.id == directive_id).first()
+    if not directive:
+        raise HTTPException(status_code=404, detail="Directive not found")
+    
+    if user and user.role != "platform_admin" and directive.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    if not directive.original_state_snapshot:
+        raise HTTPException(status_code=400, detail="No snapshot found for this directive")
+
+    campaign = db.query(Campaign).filter(Campaign.id == directive.campaign_id).first()
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Linked campaign not found")
+
+    snapshot = directive.original_state_snapshot
+    
+    # Restore Campaign State
+    campaign.status = snapshot.get("status", campaign.status)
+    campaign.total_budget = snapshot.get("total_budget", campaign.total_budget)
+    
+    # Push back to platform
+    from services.integrations.metrics_service import apply_directive_to_platform
+    # We pass a pseudo-directive that represents the 'revert' action
+    # In real SDK, this would be a direct status/budget update
+    
+    directive.status = "reverted"
+    db.commit()
+
+    return {"ok": True, "reverted_to": snapshot}

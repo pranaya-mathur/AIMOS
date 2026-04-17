@@ -1,0 +1,13 @@
+{
+  "agent_name": "predictive_benchmarker",
+  "output_key": "performance_forecast",
+  "schema": {
+    "predicted_ctr": "string",
+    "predicted_cpl": "string",
+    "confidence_score": "number",
+    "industry_comparison": "string",
+    "red_flags": ["string"],
+    "improvement_tips": ["string"],
+    "performance_outlook": "string"
+  }
+}

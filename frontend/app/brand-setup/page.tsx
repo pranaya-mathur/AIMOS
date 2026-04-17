@@ -26,7 +26,10 @@ export default function BrandSetupPage() {
   useEffect(() => {
     getBrand()
       .then((data) => {
-        if (data.name) setFormData((prev) => ({ ...prev, ...data }));
+        if (data.name) {
+            setFormData((prev) => ({ ...prev, ...data }));
+            if (data.ai_generated_kit) setBrandKit(data.ai_generated_kit);
+        }
       })
       .finally(() => setLoading(false));
   }, []);

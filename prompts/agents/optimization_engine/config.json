@@ -10,7 +10,19 @@
     "experiment_backlog": ["string"],
     "test_prioritization_framework": ["string"],
     "guardrails_and_brand_safety": ["string"],
-    "automation_vs_human_review": ["string"],
-    "handoff_to_growth_planner": ["string"]
+    "automation_vs_human_review": "string",
+    "directives": [
+      {
+        "action": "string",
+        "description": "string",
+        "risk_score": "number",
+        "confidence": "number",
+        "amount_value": "number",
+        "reasoning": "string"
+      }
+    ],
+    "handoff_to_growth_planner": "string",
+    "next_step": "string | null",
+    "refinement_context": "string | null"
   }
 }

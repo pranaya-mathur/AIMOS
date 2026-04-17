@@ -33,9 +33,10 @@ We have successfully completed the core enterprise foundation, spanning five maj
 *   **Smart Replies**: AI-assisted conversation drafts for instant customer engagement.
 
 ### 5. Enterprise Governance & Hardening (M5)
-*   **Whitelabeling**: Dedicated organization portal for custom logos, brand colors, and site identity.
-*   **Audit Trail**: Immutable governance logging for every campaign launch and strategic change.
-*   **Security Middleware**: Global HSTS, X-Frame-Options, and NoSniff protection for production-grade safety.
+*   **Hardened 2.0 Orchestration**: State-of-the-art iteration control featuring **Human-in-the-Loop** pause signals for strategy refinement.
+*   **Predictive Benchmarking**: Real-time performance forecasting (CTR/CPL) grounded in industry-specific ground truth.
+*   **Autonomous Autopilot**: Governance-safe auto-execution of high-confidence optimizations with a 5-minute recovery grace window.
+*   **Security & Audit**: Immutable governance logs, global HSTS protection, and organization-level whitelabeling controls.
 
 ---
 
@@ -132,9 +133,10 @@ AIMOS Enterprise is built with a "Security-First" mindset:
 ---
 
 ## 🔮 Roadmap & Future State
-- [ ] **Predictive AI Budgeting**: Dynamic budget reallocation based on real-time CTR signals.
-- [ ] **Custom Domain Routing**: Automatic subdomain provisioning for Whitelabel tenants.
-- [ ] **Agent Memory 2.0**: Long-term memory for business agents to "learn" from previous campaigns.
+- [x] **Hardened 2.0 Orchestration**: Human-in-the-loop, Benchmarking, and Autopilot.
+- [ ] **Competitive Spy Agent**: Real-time competitor ad intelligence feeding directly into content loops.
+- [ ] **Agent Memory 2.0**: Long-term vector-based memory for cross-campaign historical learning.
+- [ ] **Custom Domain Routing**: Automated subdomain provisioning for secondary Whitelabel tenants.
 
 ---
 

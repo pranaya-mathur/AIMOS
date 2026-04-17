@@ -27,6 +27,8 @@ class BrandUpsertBody(BaseModel):
     marketing_goal: Optional[str] = None
     monthly_budget: Optional[float] = None
     platform_preference: list = Field(default_factory=list)
+    ai_generated_kit: Optional[dict] = None
+    analysis_report: Optional[dict] = None
 
 
 @router.get("")
@@ -93,6 +95,8 @@ def upsert_brand(
     brand.marketing_goal = body.marketing_goal
     brand.monthly_budget = body.monthly_budget
     brand.platform_preference = body.platform_preference
+    brand.ai_generated_kit = body.ai_generated_kit
+    brand.analysis_report = body.analysis_report
 
     db.commit()
     db.refresh(brand)
@@ -153,11 +157,11 @@ def generate_brand_kit(
     
     kit = final_state["brand_kit"]
     
-    # 3. Persist the generated kit back to the brand record
-    # For now we'll store specific fields or just a generic 'ai_generated_kit' JSON
-    # Let's add an 'ai_generated_kit' field to models.py if not there, or reuse existing fields.
-    # Since we don't have that field, I'll update the existing description and other fields 
-    # if they are empty, but it's better to return it to the frontend for approval.
+    # 3. Persist the generated kit back to the brand record (AIM-026 to AIM-032 Integration)
+    brand.ai_generated_kit = kit
+    brand.analysis_report = analyzer_result
+    db.commit()
+    db.refresh(brand)
     
     return {
         "strategy": analyzer_result,

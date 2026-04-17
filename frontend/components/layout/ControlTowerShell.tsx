@@ -8,10 +8,11 @@ import { NavActions } from "./NavActions";
 const nav = [
   { href: "/", label: "Home", icon: "🏠" },
   { href: "/campaigns", label: "Campaigns", icon: "📋" },
-  { href: "/analytics", label: "Analytics", icon: "📈" },
-  { href: "/services", label: "Services", icon: "🧩" },
   { href: "/launch", label: "Launch", icon: "🚀" },
+  { href: "/analytics/growth", label: "Growth Engine", icon: "📈" },
   { href: "/media-studio", label: "Media", icon: "🎬" },
+  { href: "/creatives", label: "Creative Studio", icon: "🎨" },
+  { href: "/leads/pages", label: "Capture Pages", icon: "🕸️" },
   { href: "/billing", label: "Billing", icon: "💳" },
   { href: "/library", label: "Library", icon: "📚" },
   { href: "/settings", label: "Settings", icon: "⚙️" },
@@ -24,10 +25,12 @@ function titleForPath(pathname: string): string {
   if (pathname.startsWith("/billing")) return "Billing";
   if (pathname.startsWith("/campaigns/")) return "Campaign";
   if (pathname.startsWith("/campaigns")) return "Campaigns";
+  if (pathname.startsWith("/analytics/growth")) return "Growth engine";
   if (pathname.startsWith("/analytics")) return "Analytics";
-  if (pathname.startsWith("/services")) return "Services";
   if (pathname.startsWith("/launch")) return "Launch";
   if (pathname.startsWith("/media-studio")) return "Media studio";
+  if (pathname.startsWith("/creatives")) return "Creative studio";
+  if (pathname.startsWith("/leads/pages")) return "Capture pages";
   if (pathname.startsWith("/settings")) return "Settings";
   if (pathname.startsWith("/campaign")) return "New campaign";
   if (pathname.startsWith("/library")) return "Library";
@@ -41,6 +44,7 @@ export function ControlTowerShell({
 }) {
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const { logoUrl, siteName, primaryColor } = useBranding();
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
@@ -62,11 +66,12 @@ export function ControlTowerShell({
       >
         <Link
           href="/"
-          className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-lg text-white shadow-md"
-          aria-label="AIMOS home"
+          className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl text-lg text-white shadow-md overflow-hidden"
+          style={{ background: `linear-gradient(135deg, ${primaryColor}, #4338ca)` }}
+          aria-label={`${siteName} home`}
           onClick={() => setMobileNavOpen(false)}
         >
-          ⚡
+          {logoUrl ? <img src={logoUrl} alt={siteName} className="w-full h-full object-cover" /> : "⚡"}
         </Link>
         <nav className="flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto px-1 py-1">
           {nav.map(({ href, label, icon }) => {
@@ -114,6 +119,10 @@ export function ControlTowerShell({
             <h1 className="text-lg font-semibold tracking-tight text-slate-900">
               {titleForPath(pathname)}
             </h1>
+            <div className="flex items-center gap-2 px-3 py-1 bg-violet-50 border border-violet-100 rounded-full animate-pulse">
+               <div className="w-1.5 h-1.5 bg-violet-500 rounded-full"></div>
+               <span className="text-[10px] font-black uppercase tracking-widest text-violet-600">AI Orchestrator Active</span>
+            </div>
           </div>
           <NavActions />
         </header>

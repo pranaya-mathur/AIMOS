@@ -132,6 +132,7 @@ def get_campaign(
         "output": row.output,
         "celery_task_id": row.celery_task_id,
         "user_id": row.user_id,
+        "orchestration_metadata": row.orchestration_metadata,
     }
 
 

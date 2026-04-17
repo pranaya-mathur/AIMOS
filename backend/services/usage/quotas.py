@@ -142,6 +142,27 @@ def assert_can_create_campaign(db: Session, user: User) -> None:
     assert_can_consume_tokens(db, user.id)
 
 
+def assert_can_add_seat(db: Session, organization_id: str) -> None:
+    """Enforce organization seat limits based on subscription tier (AIM-160)."""
+    org = db.query(Organization).filter(Organization.id == organization_id).first()
+    if not org:
+        return
+        
+    limit = org.monthly_seat_quota or 1
+    # Count active users + pending invites
+    active_users = db.query(func.count(User.id)).filter(User.organization_id == organization_id).scalar() or 0
+    pending_invites = db.query(func.count(TeamInvite.id)).filter(
+        TeamInvite.organization_id == organization_id,
+        TeamInvite.status == "pending"
+    ).scalar() or 0
+    
+    if (active_users + pending_invites) >= limit:
+        raise QuotaExceededError(
+            f"Organization seat limit reached ({active_users + pending_invites}/{limit}). Please upgrade your plan to add more team members.",
+            code="seat_quota"
+        )
+
+
 def count_media_jobs_this_campaign(db: Session, campaign_id: str) -> int:
     from models import UsageEvent
     return (

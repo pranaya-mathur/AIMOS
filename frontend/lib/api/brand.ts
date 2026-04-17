@@ -16,6 +16,8 @@ export interface BrandData {
   marketing_goal?: string;
   monthly_budget?: number;
   platform_preference?: string[];
+  ai_generated_kit?: Record<string, any>;
+  analysis_report?: Record<string, any>;
 }
 
 export async function getBrand(): Promise<BrandData> {

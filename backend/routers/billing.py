@@ -212,9 +212,18 @@ async def stripe_webhook(
 
     event_type = event.get("type", "")
     event_data = event.get("data", {})
+    event_id = event.get("id")
 
     db = SessionLocal()
     try:
+        # Check for duplicate processing
+        if event_id:
+            from models import ProcessedStripeEvent
+            existing = db.query(ProcessedStripeEvent).filter(ProcessedStripeEvent.id == event_id).first()
+            if existing:
+                logger.info("stripe_webhook: event %s already processed", event_id)
+                return {"received": True, "duplicate": True}
+
         # ── One-time checkout completion (existing logic) ──
         if event_type == "checkout.session.completed":
             session = event_data.get("object", {})
@@ -254,6 +263,11 @@ async def stripe_webhook(
 
         else:
             logger.debug("stripe_webhook: unhandled event_type=%s", event_type)
+
+        # Record successful processing for idempotency
+        if event_id:
+            db.add(ProcessedStripeEvent(id=event_id))
+            db.commit()
 
     finally:
         db.close()
