@@ -399,7 +399,7 @@ def generate_variation(brief: str, index: int, user_id: Optional[str] = None, ca
             f"Brief: {brief}\n\n"
             "Output JSON:"
         )
-        raw = generate_text(prompt, max_tokens=200)
+        raw = generate_text(prompt)
         try:
             # Clean up JSON if there are triple backticks
             clean_json = raw.strip("`").replace("json\n", "")

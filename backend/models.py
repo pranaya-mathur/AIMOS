@@ -108,8 +108,18 @@ class Brand(Base):
     platform_preference = Column(String, nullable=True) # Meta | Google | Both
     
     # Context
+    name = Column(String, nullable=True)
+    category = Column(String, nullable=True)
     description = Column(Text, nullable=True)
     website_url = Column(String, nullable=True)
+    logo_url = Column(String, nullable=True)
+    social_links = Column(JSON, nullable=True)
+    target_audience = Column(JSON, nullable=True)
+    product_details = Column(JSON, nullable=True)
+    pricing_range = Column(String, nullable=True)
+    ai_generated_kit = Column(JSON, nullable=True)
+    analysis_report = Column(JSON, nullable=True)
+    marketing_goal = Column(String, nullable=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
@@ -239,6 +249,7 @@ class Campaign(Base):
     output = Column(JSON, nullable=True)
     celery_task_id = Column(String, nullable=True, index=True)
     organization_id = Column(String, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True)
+    brand_id = Column(String, ForeignKey("brands.id", ondelete="SET NULL"), nullable=True, index=True)
     stripe_checkout_session_id = Column(String, nullable=True)
 
     # Added for Milestone 3 (AIM-060+)

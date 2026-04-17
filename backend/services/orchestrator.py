@@ -70,6 +70,8 @@ def supervisor_router(state: AgentState):
     config = state.get("orchestration_config", {"max_iterations": 3, "manual_intervention": True})
     
     if state.get("iteration_count", 0) >= config["max_iterations"]:
+        if state.get("history", []) and state.get("history")[-1] == "business_dashboard":
+            return END
         return "business_dashboard"  # Safety governor: exit 
 
     next_agent = state.get("next_step")
@@ -180,7 +182,7 @@ def build(user_id: Optional[str] = None):
         g.add_conditional_edges(
             agent_name,
             supervisor_router,
-            {name: name for name, _ in AGENT_ORDER} | {"business_dashboard": "business_dashboard"}
+            {name: name for name, _ in AGENT_ORDER} | {"business_dashboard": "business_dashboard", END: END}
         )
 
     return g.compile()
@@ -202,7 +204,7 @@ def run_agents(data, user_id: Optional[str] = None):
                 org = db.query(Organization).filter(Organization.id == user_row.organization_id).first()
                 if org:
                     orchestration_config = {
-                        "max_iterations": org.max_orchestration_iterations or 3,
+                        "max_iterations": org.max_orchestration_iterations or 30,
                         "manual_intervention": org.manual_intervention_enabled
                     }
 
@@ -277,7 +279,13 @@ def run_agents(data, user_id: Optional[str] = None):
 def run_single_agent(agent_name: str, data: dict):
     if agent_name not in AGENT_RUNNERS:
         raise ValueError(f"Unknown agent '{agent_name}'")
+    
+    runner = AGENT_RUNNERS[agent_name]
     initial_state = {"input": data, "agent_outputs": {}}
+    
+    # 2.0 Hardened: Logic reflects full agent execution including schema enforcement
+    result_state = runner(initial_state)
+    return result_state.get(agent_name) or result_state.get("agent_outputs", {}).get(agent_name)
 def resume_agents(saved_state: dict, user_id: Optional[str] = None):
     """
     Hardened 2.0 Resumption entry point.

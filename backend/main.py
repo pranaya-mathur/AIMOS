@@ -36,8 +36,6 @@ from routers import (
     org_analytics,
 )
 
-app.include_router(orchestration.router, prefix="/orchestration", tags=["Orchestration"])
-
 import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -142,6 +140,7 @@ async def secure_headers_middleware(request, call_next):
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
 
+app.include_router(orchestration.router, prefix="/orchestration", tags=["Orchestration"])
 app.include_router(billing.router, prefix="/billing", tags=["billing"])
 app.include_router(campaign.router, prefix="/campaign", tags=["campaign"])
 app.include_router(job.router, prefix="/job", tags=["job"])

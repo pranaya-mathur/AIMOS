@@ -1,0 +1,61 @@
+INFO:     Loading environment from '.env'
+/Users/mobcoderid-296/Downloads/aimos_enterprise_real/venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+INFO:     Started server process [91405]
+INFO:     Waiting for application startup.
+2026-04-17T19:59:09+0530 | INFO | main | application_startup complete
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:65145 - "POST /auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65147 - "POST /brand HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65149 - "PATCH /org/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65151 - "GET /org/config HTTP/1.1" 200 OK
+2026-04-17T19:59:22+0530 | INFO | httpx | HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-17T19:59:22+0530 | INFO | services.integrations.openai_service | openai_usage model=gpt-4o-mini-2024-07-18 prompt_tokens=864 completion_tokens=633 total_tokens=1497
+2026-04-17T19:59:33+0530 | INFO | httpx | HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-17T19:59:33+0530 | INFO | services.integrations.openai_service | openai_usage model=gpt-4o-mini-2024-07-18 prompt_tokens=1443 completion_tokens=630 total_tokens=2073
+INFO:     127.0.0.1:65153 - "POST /brand/generate-kit HTTP/1.1" 200 OK
+2026-04-17T19:59:42+0530 | INFO | httpx | HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-17T19:59:42+0530 | INFO | services.integrations.openai_service | openai_usage model=gpt-4o-mini-2024-07-18 prompt_tokens=1884 completion_tokens=366 total_tokens=2250
+2026-04-17T20:00:28+0530 | INFO | httpx | HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-17T20:00:28+0530 | INFO | services.integrations.openai_service | openai_usage model=gpt-4o-mini-2024-07-18 prompt_tokens=2592 completion_tokens=624 total_tokens=3216
+2026-04-17T20:00:38+0530 | INFO | httpx | HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-17T20:00:38+0530 | INFO | services.integrations.openai_service | openai_usage model=gpt-4o-mini-2024-07-18 prompt_tokens=3161 completion_tokens=630 total_tokens=3791
+2026-04-17T20:00:47+0530 | INFO | httpx | HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-17T20:00:47+0530 | INFO | services.integrations.openai_service | openai_usage model=gpt-4o-mini-2024-07-18 prompt_tokens=3666 completion_tokens=386 total_tokens=4052
+2026-04-17T20:00:50+0530 | INFO | httpx | HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-17T20:00:50+0530 | INFO | services.integrations.openai_service | openai_usage model=gpt-4o-mini-2024-07-18 prompt_tokens=60 completion_tokens=65 total_tokens=125
+2026-04-17T20:00:50+0530 | INFO | tasks | Persisted creative variation #1 for campaign af26dad9-e387-412c-aaa2-d9ac6d329399
+2026-04-17T20:00:50+0530 | INFO | celery.app.trace | Task tasks.generate_variation[cf9f69ab-50db-4d6c-9af8-910173647a54] succeeded in 3.5736770839999963s: {'index': 0, 'copy': {'headline': 'Unlock Seamless Solutions!', 'body': 'Experience the power of End-to-End Validation for your entire pipeline. Ensure quality, boost efficiency, and eliminate bottlenecks—because your success starts with a flawless flow.', 'cta': 'Validate Your Pipeline Today!'}}
+2026-04-17T20:00:52+0530 | INFO | httpx | HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-17T20:00:52+0530 | INFO | services.integrations.openai_service | openai_usage model=gpt-4o-mini-2024-07-18 prompt_tokens=60 completion_tokens=69 total_tokens=129
+2026-04-17T20:00:52+0530 | INFO | tasks | Persisted creative variation #2 for campaign af26dad9-e387-412c-aaa2-d9ac6d329399
+2026-04-17T20:00:52+0530 | INFO | celery.app.trace | Task tasks.generate_variation[47077095-9909-41bf-8ac4-cc7dc081c90a] succeeded in 2.13314062500001s: {'index': 1, 'copy': {'headline': 'Seamless Pipeline Assurance', 'body': 'Elevate your confidence with our E2E Validation. Ensure every step of your pipeline is flawless—from start to finish. Experience transparency, reliability, and quality like never before.', 'cta': 'Validate Now for Peace of Mind!'}}
+2026-04-17T20:00:55+0530 | INFO | httpx | HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-17T20:00:55+0530 | INFO | services.integrations.openai_service | openai_usage model=gpt-4o-mini-2024-07-18 prompt_tokens=60 completion_tokens=69 total_tokens=129
+2026-04-17T20:00:55+0530 | INFO | tasks | Persisted creative variation #3 for campaign af26dad9-e387-412c-aaa2-d9ac6d329399
+2026-04-17T20:00:55+0530 | INFO | celery.app.trace | Task tasks.generate_variation[2dceb677-933e-4027-8511-f44e1907b53f] succeeded in 2.389421749999997s: {'index': 2, 'copy': {'headline': 'Achieve Flawless Performance from Start to Finish', 'body': 'Unlock the power of comprehensive E2E validation to ensure your entire pipeline operates seamlessly. Don\'t leave your success to chance—optimize every step with precision.', 'cta': 'Start Your Validation Journey Today!'}}
+2026-04-17T20:00:55+0530 | INFO | tasks | Triggered 3 copy variations for campaign af26dad9-e387-412c-aaa2-d9ac6d329399
+2026-04-17T20:00:55+0530 | INFO | celery.app.trace | Task tasks.run_campaign[103d9ffa-9c89-457d-832f-a75732ab1cba] succeeded in 81.310241333s: {'input': {'brief': 'E2E Validation of the full pipeline.', 'brand_profile': {'identities': {...}, 'strategy': {...}, 'assets': {...}, 'ai_brand_kit': {...}, 'analysis_report': {...}, 'product_details': [...]}}, 'agent_outputs': {'competitive_spy': {'competitors': [...], 'market_positioning_analysis': 'Competitors focus on scalability and comprehensive services but often lack outstanding customer support, which E2E Test Brand can leverage to differentiate itself.', 'strategic_risks': [...]}, 'business_analyzer': {'executive_summary': 'E2E Test Brand is set to enter the competitive SaaS market by providing tailored software solutions for mid-sized businesses, focusing on exceptional customer support and integration capabilities to differentiate from incumbents.', 'industry_summary': 'The software industry, particularly SaaS, is rapidly expanding with a trend towards subscription models and greater scrutiny on data privacy. Buying cycles can be lengthy due to thorough evaluations typical in B2B contexts.', 'mark...', ...}}}
+INFO:     127.0.0.1:65157 - "POST /campaign/create HTTP/1.1" 200 OK
+/Users/mobcoderid-296/Downloads/aimos_enterprise_real/venv/lib/python3.9/site-packages/celery/backends/base.py:682: RuntimeWarning: Results are not stored in backend and should not be retrieved when task_always_eager is enabled, unless task_store_eager_result is enabled.
+  warnings.warn(
+INFO:     127.0.0.1:65173 - "GET /job/103d9ffa-9c89-457d-832f-a75732ab1cba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65175 - "GET /job/103d9ffa-9c89-457d-832f-a75732ab1cba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65177 - "GET /job/103d9ffa-9c89-457d-832f-a75732ab1cba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65179 - "GET /job/103d9ffa-9c89-457d-832f-a75732ab1cba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65181 - "GET /job/103d9ffa-9c89-457d-832f-a75732ab1cba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65183 - "GET /job/103d9ffa-9c89-457d-832f-a75732ab1cba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65185 - "GET /job/103d9ffa-9c89-457d-832f-a75732ab1cba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65187 - "GET /job/103d9ffa-9c89-457d-832f-a75732ab1cba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65189 - "GET /job/103d9ffa-9c89-457d-832f-a75732ab1cba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65191 - "GET /job/103d9ffa-9c89-457d-832f-a75732ab1cba HTTP/1.1" 200 OK
+2026-04-17T20:01:27+0530 | INFO | httpx | HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-17T20:01:29+0530 | INFO | httpx | HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-17T20:01:29+0530 | INFO | services.integrations.openai_service | openai_usage model=gpt-4o-mini-2024-07-18 prompt_tokens=74 completion_tokens=34 total_tokens=108
+2026-04-17T20:01:29+0530 | INFO | services.integrations.whatsapp_cloud | [MOCK WHATSAPP] To: 1234567890, Body: Great to hear you're interested in the enterprise plan! The pricing is customized based on your needs. Please provide your requirements, and I'll get back to you with a quote.
+2026-04-17T20:01:29+0530 | INFO | tasks | WhatsApp lead captured, scored (90), and replied: lead_id=9a1b7198-6512-4afe-bc44-02f18c643e02
+2026-04-17T20:01:29+0530 | INFO | celery.app.trace | Task tasks.process_whatsapp_inbound[429073c2-48b0-436a-950e-88a74dee4b8f] succeeded in 3.6341377079999972s: {'status': 'replied', 'lead_id': '9a1b7198-6512-4afe-bc44-02f18c643e02', 'score': 90, 'reply': 'Great to hear you\'re interested in the enterprise plan! The pricing is customized based on your needs. Please provide your requirements, and I\'ll get back to you with a quote.'}
+INFO:     127.0.0.1:65193 - "POST /webhooks/whatsapp HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65198 - "GET /leads HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65200 - "GET /analytics/global HTTP/1.1" 200 OK

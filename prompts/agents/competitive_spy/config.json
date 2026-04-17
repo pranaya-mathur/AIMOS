@@ -1,5 +1,6 @@
 {
-  "name": "Competitive Spy Agent",
+  "agent_name": "competitive_spy",
+  "output_key": "competitor_intel",
   "role": "Strategic Intelligence & Market Researcher",
   "description": "Hardened 2.0 Phase 2: Automates competitor ad research and positioning analysis to ground the strategy in real-world market context.",
   "required_outputs": [
