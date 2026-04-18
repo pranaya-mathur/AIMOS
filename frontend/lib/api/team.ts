@@ -1,4 +1,5 @@
 import { getSettings } from "@/lib/settings";
+import { getStoredToken } from "./token-store";
 
 export interface TeamMember {
   id: string;
@@ -24,7 +25,7 @@ export async function getTeam(): Promise<TeamListing> {
   const settings = getSettings();
   const res = await fetch(`${settings.apiBaseUrl}/team/members`, {
     headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
   });
   if (!res.ok) throw new Error("Failed to fetch team members");
@@ -37,7 +38,7 @@ export async function inviteMember(email: string, role: string = "agency_client"
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
     body: JSON.stringify({ email, role }),
   });
@@ -52,7 +53,7 @@ export async function removeMember(userId: string): Promise<void> {
   const res = await fetch(`${settings.apiBaseUrl}/team/members/${userId}`, {
     method: "DELETE",
     headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
   });
   if (!res.ok) throw new Error("Failed to remove member");

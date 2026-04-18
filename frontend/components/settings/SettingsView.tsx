@@ -22,9 +22,9 @@ export function SettingsView() {
   return (
     <div className="mx-auto max-w-xl space-y-8">
       <section>
-        <h2 className="text-lg font-semibold text-slate-900">Account</h2>
+        <h2 className="text-lg font-semibold text-white">Account</h2>
         {err && (
-          <p className="mt-2 text-sm text-red-600" role="alert">
+          <p className="mt-2 text-sm text-rose-400" role="alert">
             {err}
           </p>
         )}
@@ -33,26 +33,26 @@ export function SettingsView() {
         )}
         {me && (
           <dl className="mt-4 space-y-2 text-sm">
-            <div className="flex justify-between gap-4 border-b border-slate-200 py-2">
+            <div className="flex justify-between gap-4 border-b border-white/[0.08] py-2">
               <dt className="text-slate-500">Email</dt>
-              <dd className="text-slate-800">{me.email ?? "—"}</dd>
+              <dd className="text-slate-200">{me.email ?? "—"}</dd>
             </div>
-            <div className="flex justify-between gap-4 border-b border-slate-200 py-2">
+            <div className="flex justify-between gap-4 border-b border-white/[0.08] py-2">
               <dt className="text-slate-500">Role</dt>
-              <dd className="text-slate-800">{me.role ?? "—"}</dd>
+              <dd className="text-slate-200">{me.role ?? "—"}</dd>
             </div>
-            <div className="flex justify-between gap-4 border-b border-slate-200 py-2">
+            <div className="flex justify-between gap-4 border-b border-white/[0.08] py-2">
               <dt className="text-slate-500">Name</dt>
-              <dd className="text-slate-800">{me.full_name ?? "—"}</dd>
+              <dd className="text-slate-200">{me.full_name ?? "—"}</dd>
             </div>
             <div className="flex justify-between gap-4 py-2">
               <dt className="text-slate-500">User ID</dt>
-              <dd className="break-all font-mono text-xs text-slate-600">
+              <dd className="break-all font-mono text-xs text-slate-400">
                 {me.id ?? "—"}
               </dd>
             </div>
             {me.note && (
-              <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              <p className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
                 {me.note}
               </p>
             )}
@@ -61,14 +61,14 @@ export function SettingsView() {
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold text-slate-900">Agency Branding</h2>
+        <h2 className="text-lg font-semibold text-white">Agency Branding</h2>
         <div className="mt-4 space-y-4">
              <div className="space-y-1">
                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Site Name</label>
                  <input 
                     type="text" 
                     placeholder="AIMOS Enterprise"
-                    className="w-full rounded-2xl bg-slate-50 border border-slate-100 p-4 text-sm font-medium" 
+                    className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 text-sm font-medium text-slate-200 placeholder:text-slate-500" 
                  />
              </div>
              <div className="space-y-1">
@@ -76,7 +76,7 @@ export function SettingsView() {
                  <input 
                     type="text" 
                     placeholder="https://..."
-                    className="w-full rounded-2xl bg-slate-50 border border-slate-100 p-4 text-sm font-medium" 
+                    className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 text-sm font-medium text-slate-200 placeholder:text-slate-500" 
                  />
              </div>
              <div className="flex items-center gap-4">
@@ -87,31 +87,31 @@ export function SettingsView() {
                         className="w-full h-12 rounded-2xl cursor-pointer" 
                     />
                  </div>
-                 <button className="h-12 px-8 mt-5 rounded-2xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest">Save Branding</button>
+                 <button className="mt-5 h-12 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-8 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-violet-500/20">Save Branding</button>
              </div>
         </div>
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold text-slate-900">Governance & Security</h2>
-        <ul className="mt-4 space-y-2 text-sm text-slate-600">
-          <li className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100">
+        <h2 className="text-lg font-semibold text-white">Governance & Security</h2>
+        <ul className="mt-4 space-y-2 text-sm text-slate-400">
+          <li className="flex items-center justify-between rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
              <div>
-                <span className="block font-bold">Multi-Seat Team</span>
-                <span className="text-[10px] text-slate-400 font-medium">Manage members and seats</span>
+                <span className="block font-bold text-slate-200">Multi-Seat Team</span>
+                <span className="text-[10px] font-medium text-slate-500">Manage members and seats</span>
              </div>
-             <Link href="/settings/team" className="text-violet-600 font-bold hover:underline">Manage Team →</Link>
+             <Link href="/settings/team" className="font-bold text-violet-400 hover:text-violet-300 hover:underline">Manage Team →</Link>
           </li>
-          <li className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100">
-             <span>Enterprise Audit Trail</span>
-             <Link href="/settings/audit" className="text-violet-600 font-bold hover:underline">View History →</Link>
+          <li className="flex items-center justify-between rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
+             <span className="text-slate-200">Enterprise Audit Trail</span>
+             <Link href="/settings/audit" className="font-bold text-violet-400 hover:text-violet-300 hover:underline">View History →</Link>
           </li>
           <li>
             <a
               href={swaggerUrl()}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 text-slate-600 hover:text-violet-600"
+              className="flex items-center justify-between rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 text-slate-400 hover:text-violet-300"
             >
               <span>API docs (Swagger)</span>
               <span className="opacity-40">↗</span>

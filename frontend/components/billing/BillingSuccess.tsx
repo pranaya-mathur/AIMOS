@@ -11,7 +11,7 @@ export function BillingSuccess() {
   return (
     <div className="mx-auto max-w-lg space-y-4 text-center">
       <h1 className="text-2xl font-semibold text-green-400">Payment started</h1>
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-slate-400">
         If you completed checkout in Stripe, the webhook will mark your
         campaign <code className="text-slate-500">paid</code> and update quotas.
         This can take a few seconds.
@@ -32,13 +32,13 @@ export function BillingSuccess() {
         )}
         <Link
           href="/campaigns"
-          className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm text-slate-700 hover:bg-slate-100"
+          className="rounded-xl border border-white/[0.12] px-5 py-2.5 text-sm text-slate-300 hover:bg-white/[0.06]"
         >
           All campaigns
         </Link>
         <Link
           href="/billing"
-          className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm text-slate-700 hover:bg-slate-100"
+          className="rounded-xl border border-white/[0.12] px-5 py-2.5 text-sm text-slate-300 hover:bg-white/[0.06]"
         >
           Billing
         </Link>

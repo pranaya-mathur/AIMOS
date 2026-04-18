@@ -62,8 +62,8 @@ export function CampaignBuilder() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-600">
-        <Link href="/campaigns" className="text-violet-600 hover:text-violet-700">
+      <p className="text-sm text-slate-400">
+        <Link href="/campaigns" className="text-violet-400 hover:text-violet-300">
           ← All campaigns
         </Link>
         <span className="text-slate-400"> · </span>
@@ -75,20 +75,20 @@ export function CampaignBuilder() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Campaign name (optional)"
-          className="w-full rounded-xl border border-slate-200 bg-white p-3 text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+          className="w-full rounded-xl border border-white/[0.1] bg-white/[0.04] p-3 text-slate-100 placeholder:text-slate-500 focus:border-violet-500/50 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
         />
         <input
           value={product}
           onChange={(e) => setProduct(e.target.value)}
           placeholder="Product"
-          className="w-full rounded-xl border border-slate-200 bg-white p-3 text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+          className="w-full rounded-xl border border-white/[0.1] bg-white/[0.04] p-3 text-slate-100 placeholder:text-slate-500 focus:border-violet-500/50 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
         />
         <textarea
           value={audience}
           onChange={(e) => setAudience(e.target.value)}
           placeholder="Audience"
           rows={5}
-          className="w-full resize-y rounded-xl border border-slate-200 bg-white p-3 text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+          className="w-full resize-y rounded-xl border border-white/[0.1] bg-white/[0.04] p-3 text-slate-100 placeholder:text-slate-500 focus:border-violet-500/50 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
         />
         <button
           type="button"
@@ -99,14 +99,14 @@ export function CampaignBuilder() {
           {busy ? "Generating…" : "Generate campaign"}
         </button>
         {error && (
-          <div className="rounded-xl bg-red-50 p-3 border border-red-100">
-            <p className="text-sm text-red-600" role="alert">
+          <div className="rounded-xl border border-rose-500/25 bg-rose-500/10 p-3">
+            <p className="text-sm text-rose-300" role="alert">
               {error}
             </p>
             {error.toLowerCase().includes("quota") && (
               <Link
                 href="/billing"
-                className="mt-2 block text-xs font-semibold text-red-700 hover:underline"
+                className="mt-2 block text-xs font-semibold text-rose-200 hover:underline"
               >
                 Upgrade your plan to increase limits →
               </Link>
@@ -114,14 +114,14 @@ export function CampaignBuilder() {
           </div>
         )}
         {jobState.phase === "failure" && (
-          <div className="rounded-xl bg-red-50 p-3 border border-red-100">
-            <p className="text-sm text-red-600" role="alert">
+          <div className="rounded-xl border border-rose-500/25 bg-rose-500/10 p-3">
+            <p className="text-sm text-rose-300" role="alert">
               {jobState.message}
             </p>
             {jobState.message?.toLowerCase().includes("quota") && (
               <Link
                 href="/billing"
-                className="mt-2 block text-xs font-semibold text-red-700 hover:underline"
+                className="mt-2 block text-xs font-semibold text-rose-200 hover:underline"
               >
                 Increase your token quota →
               </Link>
@@ -129,13 +129,13 @@ export function CampaignBuilder() {
           </div>
         )}
         {jobState.phase === "polling" && (
-          <p className="text-sm text-amber-600">Pipeline running…</p>
+          <p className="text-sm text-amber-400">Pipeline running…</p>
         )}
       </div>
 
-      <div className="min-h-[280px] flex-1 rounded-2xl border border-slate-200 bg-white p-4 lg:min-h-[420px]">
-        <p className="text-sm text-slate-600">Generated output</p>
-        <pre className="mt-3 max-h-[min(60vh,520px)] overflow-auto whitespace-pre-wrap break-words text-sm text-slate-800">
+      <div className="min-h-[280px] flex-1 rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 lg:min-h-[420px]">
+        <p className="text-sm text-slate-400">Generated output</p>
+        <pre className="mt-3 max-h-[min(60vh,520px)] overflow-auto whitespace-pre-wrap break-words text-sm text-slate-300">
           {output || "—"}
         </pre>
       </div>

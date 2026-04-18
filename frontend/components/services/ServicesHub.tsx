@@ -22,8 +22,8 @@ export function ServicesHub() {
   return (
     <div className="space-y-10">
       <section>
-        <h2 className="text-lg font-semibold text-slate-900">API & integrations</h2>
-        <p className="mt-1 max-w-2xl text-sm text-slate-600">
+        <h2 className="text-lg font-semibold text-white">API & integrations</h2>
+        <p className="mt-1 max-w-2xl text-sm text-slate-400">
           This app mirrors what the FastAPI backend exposes. Use the Control
           Tower for flows; use Swagger for raw requests.
         </p>
@@ -40,7 +40,7 @@ export function ServicesHub() {
             href={openapiUrl()}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-800 hover:bg-slate-100"
+            className="rounded-xl border border-white/[0.12] px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.06]"
           >
             OpenAPI JSON
           </a>
@@ -55,10 +55,10 @@ export function ServicesHub() {
           {SERVICE_MODULES.map((m) => (
             <div
               key={m.id}
-              className="rounded-2xl border border-slate-200 bg-white p-4"
+              className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 backdrop-blur-sm"
             >
-              <h3 className="font-medium text-slate-900">{m.title}</h3>
-              <p className="mt-2 text-sm text-slate-600">{m.description}</p>
+              <h3 className="font-medium text-slate-100">{m.title}</h3>
+              <p className="mt-2 text-sm text-slate-400">{m.description}</p>
               <ul className="mt-3 space-y-1 font-mono text-xs text-slate-500">
                 {m.methods.map((x) => (
                   <li key={x}>{x}</li>
@@ -66,7 +66,7 @@ export function ServicesHub() {
               </ul>
               <Link
                 href={m.href}
-                className="mt-4 inline-block text-sm text-violet-600 hover:text-violet-700"
+                className="mt-4 inline-block text-sm text-violet-400 hover:text-violet-300"
               >
                 Open in app →
               </Link>
@@ -88,11 +88,11 @@ export function ServicesHub() {
           <p className="text-sm text-slate-500">Loading agent registry…</p>
         )}
         {agents && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-4">
-            <p className="text-sm text-slate-600">
-              <span className="font-medium text-slate-800">{agents.count}</span>{" "}
+          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 backdrop-blur-sm">
+            <p className="text-sm text-slate-400">
+              <span className="font-medium text-slate-200">{agents.count}</span>{" "}
               runners · single-agent endpoint:{" "}
-              <code className="text-xs text-violet-700">
+              <code className="text-xs text-violet-400">
                 POST /agents/{"{name}"}/run
               </code>
             </p>
@@ -100,7 +100,7 @@ export function ServicesHub() {
               {agents.agents.map((name) => (
                 <span
                   key={name}
-                  className="rounded-lg bg-slate-100 px-2.5 py-1 font-mono text-xs text-slate-700"
+                  className="rounded-lg bg-white/[0.06] px-2.5 py-1 font-mono text-xs text-slate-300"
                 >
                   {name}
                 </span>
@@ -109,7 +109,7 @@ export function ServicesHub() {
             {agents.prompt_bundles?.length ? (
               <p className="mt-4 text-xs text-slate-500">
                 Prompt bundles: {agents.prompt_bundles.length} under{" "}
-                <code className="text-slate-600">prompts/agents/</code>
+                <code className="text-slate-500">prompts/agents/</code>
               </p>
             ) : null}
           </div>

@@ -1,4 +1,5 @@
 import { getSettings } from "@/lib/settings";
+import { getStoredToken } from "./token-store";
 
 export interface WhitelabelConfig {
   logo_url?: string;
@@ -10,7 +11,7 @@ export async function getOrgConfig(): Promise<WhitelabelConfig> {
   const settings = getSettings();
   const res = await fetch(`${settings.apiBaseUrl}/org/config`, {
     headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
   });
   if (!res.ok) throw new Error("Failed to fetch org config");
@@ -23,7 +24,7 @@ export async function updateOrgConfig(config: WhitelabelConfig): Promise<void> {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
     body: JSON.stringify(config),
   });

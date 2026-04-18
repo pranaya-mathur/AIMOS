@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { AuthProvider } from "@/components/auth/AuthProvider";
+import { Providers } from "@/components/providers";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -18,6 +18,8 @@ export const metadata: Metadata = {
   description: "AI marketing operating system dashboard",
 };
 
+import { AmbientOrbs } from "@/components/common/AmbientOrbs";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -26,10 +28,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full scroll-smooth`}
     >
-      <body className="min-h-full bg-slate-50 font-sans text-slate-900 antialiased">
-        <AuthProvider>{children}</AuthProvider>
+      <body className="min-h-full font-sans antialiased text-white bg-black">
+        <Providers>
+          <AmbientOrbs />
+          {children}
+        </Providers>
       </body>
     </html>
   );

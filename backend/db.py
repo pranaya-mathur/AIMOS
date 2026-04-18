@@ -49,6 +49,25 @@ def apply_schema_patches() -> None:
         # Milestone 5: Enterprise Governance & Whitelabeling
         "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS whitelabel_config TEXT",
         "CREATE TABLE IF NOT EXISTS audit_logs (id TEXT PRIMARY KEY, user_id TEXT, organization_id TEXT, action TEXT, resource_id TEXT, metadata_json TEXT, timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP)",
+        # brands: ORM expects unified seller profile columns (create_all does not ALTER)
+        "ALTER TABLE brands ADD COLUMN IF NOT EXISTS organization_id VARCHAR REFERENCES organizations(id) ON DELETE SET NULL",
+        "ALTER TABLE brands ADD COLUMN IF NOT EXISTS business_type VARCHAR",
+        "ALTER TABLE brands ADD COLUMN IF NOT EXISTS industry VARCHAR",
+        "ALTER TABLE brands ADD COLUMN IF NOT EXISTS primary_goal VARCHAR",
+        "ALTER TABLE brands ADD COLUMN IF NOT EXISTS monthly_budget DOUBLE PRECISION",
+        "ALTER TABLE brands ADD COLUMN IF NOT EXISTS platform_preference VARCHAR",
+        "ALTER TABLE brands ADD COLUMN IF NOT EXISTS marketing_goal VARCHAR",
+        "ALTER TABLE brands ADD COLUMN IF NOT EXISTS category VARCHAR",
+        "ALTER TABLE brands ADD COLUMN IF NOT EXISTS description TEXT",
+        "ALTER TABLE brands ADD COLUMN IF NOT EXISTS website_url VARCHAR",
+        "ALTER TABLE brands ADD COLUMN IF NOT EXISTS logo_url VARCHAR",
+        "ALTER TABLE brands ADD COLUMN IF NOT EXISTS social_links JSON",
+        "ALTER TABLE brands ADD COLUMN IF NOT EXISTS target_audience JSON",
+        "ALTER TABLE brands ADD COLUMN IF NOT EXISTS product_details JSON",
+        "ALTER TABLE brands ADD COLUMN IF NOT EXISTS pricing_range VARCHAR",
+        "ALTER TABLE brands ADD COLUMN IF NOT EXISTS ai_generated_kit JSON",
+        "ALTER TABLE brands ADD COLUMN IF NOT EXISTS analysis_report JSON",
+        "ALTER TABLE brands ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()",
     ]
     with engine.begin() as conn:
         for sql in stmts:

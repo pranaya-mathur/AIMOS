@@ -17,7 +17,7 @@ import { swaggerUrl } from "@/lib/services-config";
 import Link from "next/link";
 
 function inputClass() {
-  return "mt-1 w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/15";
+  return "mt-1 w-full rounded-xl border border-white/[0.1] bg-white/[0.04] p-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-violet-500/50 focus:outline-none focus:ring-2 focus:ring-violet-500/20";
 }
 
 export function LaunchCenter() {
@@ -86,20 +86,20 @@ export function LaunchCenter() {
 
     if (isPremium && isFree) {
       return (
-        <div className="relative overflow-hidden rounded-2xl border border-violet-100 bg-violet-50/30 p-4">
+        <div className="relative overflow-hidden rounded-2xl border border-violet-500/25 bg-violet-500/10 p-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-medium text-slate-800">{platform}</h3>
-            <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-violet-600">
+            <h3 className="font-medium text-slate-200">{platform}</h3>
+            <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-violet-300">
               Professional Plan
             </span>
           </div>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-slate-400">
             Launch to {platform} is a premium feature. Upgrade your plan to unlock
             ad networks and direct engagement.
           </p>
           <Link
             href="/billing"
-            className="mt-3 inline-block text-sm font-semibold text-violet-600 hover:underline"
+            className="mt-3 inline-block text-sm font-semibold text-violet-400 hover:text-violet-300 hover:underline"
           >
             Upgrade to Professional →
           </Link>
@@ -108,7 +108,7 @@ export function LaunchCenter() {
     }
 
     return (
-      <section className="rounded-2xl border border-slate-200 bg-white p-4">
+      <section className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 backdrop-blur-sm">
         {children}
       </section>
     );
@@ -118,25 +118,25 @@ export function LaunchCenter() {
     <div className="space-y-10">
       <section>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold text-slate-900">
+          <h2 className="text-lg font-semibold text-white">
             Integration status
           </h2>
           <button
             type="button"
             onClick={loadStatus}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm hover:bg-slate-50"
+            className="rounded-lg border border-white/[0.1] bg-white/[0.04] px-3 py-1.5 text-sm text-slate-300 shadow-sm hover:bg-white/[0.08]"
           >
             Refresh
           </button>
         </div>
         <p className="mt-1 text-sm text-slate-500">
           Boolean flags from env (see{" "}
-          <a href={swaggerUrl()} className="text-violet-600 hover:underline">
+          <a href={swaggerUrl()} className="text-violet-400 hover:text-violet-300 hover:underline">
             Swagger
           </a>{" "}
           <code className="text-slate-500">GET /launch/status</code>).
         </p>
-        <pre className="mt-3 max-h-48 overflow-auto rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-600">
+        <pre className="mt-3 max-h-48 overflow-auto rounded-xl border border-white/[0.06] bg-[rgba(10,10,16,0.9)] p-3 text-xs text-slate-400">
           {status ? JSON.stringify(status, null, 2) : "Loading…"}
         </pre>
       </section>
@@ -148,9 +148,9 @@ export function LaunchCenter() {
       )}
 
       <PremiumGuard platform="Meta">
-        <h3 className="font-medium text-slate-800">Meta marketing</h3>
+        <h3 className="font-medium text-slate-200">Meta marketing</h3>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <label className="text-sm text-slate-600">
+          <label className="text-sm text-slate-400">
             Campaign name
             <input
               value={metaName}
@@ -171,9 +171,9 @@ export function LaunchCenter() {
         </button>
       </PremiumGuard>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4">
-        <h3 className="font-medium text-slate-800">WhatsApp</h3>
-        <label className="mt-3 block text-sm text-slate-600">
+      <section className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 backdrop-blur-sm">
+        <h3 className="font-medium text-slate-200">WhatsApp</h3>
+        <label className="mt-3 block text-sm text-slate-400">
           To (E.164, no +)
           <input
             value={waTo}
@@ -182,7 +182,7 @@ export function LaunchCenter() {
             className={inputClass()}
           />
         </label>
-        <label className="mt-3 block text-sm text-slate-600">
+        <label className="mt-3 block text-sm text-slate-400">
           Message
           <textarea
             value={waBody}
@@ -206,9 +206,9 @@ export function LaunchCenter() {
       </section>
 
       <PremiumGuard platform="Google Ads">
-        <h3 className="font-medium text-slate-800">Google Ads</h3>
+        <h3 className="font-medium text-slate-200">Google Ads</h3>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <label className="text-sm text-slate-600">
+          <label className="text-sm text-slate-400">
             Campaign name
             <input
               value={gName}
@@ -216,7 +216,7 @@ export function LaunchCenter() {
               className={inputClass()}
             />
           </label>
-          <label className="text-sm text-slate-600">
+          <label className="text-sm text-slate-400">
             Customer ID (optional)
             <input
               value={gCustomer}
@@ -242,9 +242,9 @@ export function LaunchCenter() {
         </button>
       </PremiumGuard>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4">
-        <h3 className="font-medium text-slate-800">X (Twitter)</h3>
-        <label className="mt-3 block text-sm text-slate-600">
+      <section className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 backdrop-blur-sm">
+        <h3 className="font-medium text-slate-200">X (Twitter)</h3>
+        <label className="mt-3 block text-sm text-slate-400">
           Post text
           <textarea
             value={xText}
@@ -264,9 +264,9 @@ export function LaunchCenter() {
       </section>
 
       <PremiumGuard platform="Email">
-        <h3 className="font-medium text-slate-800">Email</h3>
+        <h3 className="font-medium text-slate-200">Email</h3>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <label className="text-sm text-slate-600 sm:col-span-2">
+          <label className="text-sm text-slate-400 sm:col-span-2">
             To
             <input
               type="email"
@@ -275,7 +275,7 @@ export function LaunchCenter() {
               className={inputClass()}
             />
           </label>
-          <label className="text-sm text-slate-600 sm:col-span-2">
+          <label className="text-sm text-slate-400 sm:col-span-2">
             Subject
             <input
               value={emSub}
@@ -283,7 +283,7 @@ export function LaunchCenter() {
               className={inputClass()}
             />
           </label>
-          <label className="text-sm text-slate-600 sm:col-span-2">
+          <label className="text-sm text-slate-400 sm:col-span-2">
             Body
             <textarea
               value={emBody}
@@ -312,8 +312,8 @@ export function LaunchCenter() {
       </PremiumGuard>
 
       <PremiumGuard platform="SMS">
-        <h3 className="font-medium text-slate-800">SMS</h3>
-        <label className="mt-3 block text-sm text-slate-600">
+        <h3 className="font-medium text-slate-200">SMS</h3>
+        <label className="mt-3 block text-sm text-slate-400">
           To phone
           <input
             value={smsTo}
@@ -321,7 +321,7 @@ export function LaunchCenter() {
             className={inputClass()}
           />
         </label>
-        <label className="mt-3 block text-sm text-slate-600">
+        <label className="mt-3 block text-sm text-slate-400">
           Body
           <textarea
             value={smsBody}

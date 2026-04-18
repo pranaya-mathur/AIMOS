@@ -1,4 +1,5 @@
 import { getSettings } from "@/lib/settings";
+import { getStoredToken } from "./token-store";
 
 export async function resumeCampaign(campaignId: string, feedback: string): Promise<void> {
   const settings = getSettings();
@@ -6,7 +7,7 @@ export async function resumeCampaign(campaignId: string, feedback: string): Prom
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
     body: JSON.stringify({ feedback }),
   });

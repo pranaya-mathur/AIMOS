@@ -45,6 +45,8 @@ def get_global_analytics(
             "roi": float(roi),
             "total_leads": leads_count,
             "total_conversions": total_conversions,
+            "total_impressions": int(total_impressions),
+            "total_clicks": int(total_clicks),
             "ctr": float(ctr),
             "cvr": float(cvr),
             "cpl": float(cpl)

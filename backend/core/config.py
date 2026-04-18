@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     jwt_secret: str
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24 * 7
+    # Dev only: include `reset_token` in POST /auth/password-reset/request JSON (no email is sent).
+    password_reset_token_in_response: bool = Field(
+        default=False,
+        validation_alias="PASSWORD_RESET_TOKEN_IN_RESPONSE",
+    )
     openai_api_key: Optional[str] = None
     mock_media_provider: Optional[str] = None
     log_level: str = "INFO"
@@ -57,9 +62,15 @@ class Settings(BaseSettings):
 
     @property
     def cors_origin_list(self) -> list[str]:
-        if not self.cors_origins:
-            return []
-        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+        """Browser calls from Next (localhost:3000) to API (localhost:8000) require CORS."""
+        raw = [o.strip() for o in (self.cors_origins or "").split(",") if o.strip()]
+        if raw:
+            return raw
+        return [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://[::1]:3000",
+        ]
 
     @property
     def mock_media_enabled(self) -> bool:

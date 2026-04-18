@@ -2,7 +2,7 @@ import uuid
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 from sqlalchemy.orm import Session
 
 from db import get_db
@@ -17,7 +17,10 @@ class BrandUpsertBody(BaseModel):
     # Seller Profile (AIM-001-005)
     business_type: Optional[str] = None
     industry: Optional[str] = None
-    primary_goal: Optional[str] = None
+    primary_goal: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("primary_goal", "marketing_goal"),
+    )
     monthly_budget: Optional[float] = None
     platform_preference: list = Field(default_factory=list)
     

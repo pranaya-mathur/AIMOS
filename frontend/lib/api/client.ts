@@ -51,7 +51,11 @@ export async function apiFetch(
 }
 
 function isAuthPath(path: string): boolean {
-  return path.includes("/auth/login") || path.includes("/auth/register");
+  return (
+    path.includes("/auth/login") ||
+    path.includes("/auth/register") ||
+    path.includes("/auth/password-reset")
+  );
 }
 
 export async function apiFetchJson<T>(

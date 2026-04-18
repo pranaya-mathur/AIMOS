@@ -1,21 +1,21 @@
 import type { AgentStatus } from "./types";
 
 type AgentNodeProps = {
-  title: string;
+  title: React.ReactNode;
   status: AgentStatus;
 };
 
 const statusColor: Record<AgentStatus, string> = {
-  done: "text-emerald-700",
-  running: "animate-pulse text-amber-600",
-  pending: "text-slate-400",
-  failed: "text-red-600",
+  done: "text-emerald-400",
+  running: "animate-pulse text-amber-400",
+  pending: "text-slate-500",
+  failed: "text-rose-400",
 };
 
 export function AgentNode({ title, status }: AgentNodeProps) {
   return (
-    <div className="h-24 w-44 shrink-0 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-      <p className="text-sm font-medium text-slate-800">{title}</p>
+    <div className="h-24 w-44 shrink-0 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-3 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.4)] backdrop-blur-sm">
+      <p className="text-sm font-medium text-slate-200">{title}</p>
       <span className={`text-xs capitalize ${statusColor[status]}`}>
         {status}
       </span>

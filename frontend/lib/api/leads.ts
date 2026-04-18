@@ -1,4 +1,5 @@
 import { getSettings } from "@/lib/settings";
+import { getStoredToken } from "./token-store";
 
 export interface Message {
   id: string;
@@ -22,7 +23,7 @@ export async function getLeads(): Promise<Lead[]> {
   const settings = getSettings();
   const res = await fetch(`${settings.apiBaseUrl}/leads`, {
     headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
   });
   if (!res.ok) throw new Error("Failed to fetch leads");
@@ -33,7 +34,7 @@ export async function getLeadMessages(id: string): Promise<Message[]> {
   const settings = getSettings();
   const res = await fetch(`${settings.apiBaseUrl}/leads/${id}/messages`, {
     headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
   });
   if (!res.ok) throw new Error("Failed to fetch messages");
@@ -45,7 +46,7 @@ export async function updateLeadStatus(id: string, status: string): Promise<void
   const res = await fetch(`${settings.apiBaseUrl}/leads/${id}/status?status=${status}`, {
     method: "PATCH",
     headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
   });
   if (!res.ok) throw new Error("Failed to update status");
@@ -66,7 +67,7 @@ export async function getLandingPages(): Promise<LandingPage[]> {
   const settings = getSettings();
   const res = await fetch(`${settings.apiBaseUrl}/landing-pages`, {
     headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
   });
   if (!res.ok) throw new Error("Failed to fetch landing pages");
@@ -78,7 +79,7 @@ export async function generateLandingPage(): Promise<{ id: string; slug: string 
   const res = await fetch(`${settings.apiBaseUrl}/landing-pages/generate`, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
   });
   if (!res.ok) throw new Error("Failed to generate landing page");
@@ -91,7 +92,7 @@ export async function updateLandingPage(id: string, data: Partial<LandingPage>):
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
     body: JSON.stringify(data),
   });
@@ -103,7 +104,7 @@ export async function deleteLandingPage(id: string): Promise<void> {
   const res = await fetch(`${settings.apiBaseUrl}/landing-pages/${id}`, {
     method: "DELETE",
     headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
   });
   if (!res.ok) throw new Error("Failed to delete landing page");

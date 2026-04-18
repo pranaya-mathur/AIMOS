@@ -13,6 +13,9 @@ export async function queueCreativeVariations(body: {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ brief: body.brief, n: body.n ?? 3 }),
+  });
+}
+
 export interface AdCreative {
   id: string;
   campaign_id?: string;

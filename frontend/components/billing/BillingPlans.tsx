@@ -39,7 +39,7 @@ const styles = {
 
   heroSub: {
     fontSize: "16px",
-    color: "#64748b",
+    color: "#94a3b8",
     maxWidth: "600px",
     margin: "0 auto",
     lineHeight: 1.6,
@@ -55,7 +55,7 @@ const styles = {
   card: (tier: PlanTier, isCurrentTier: boolean) =>
     ({
       position: "relative",
-      background: "#ffffff",
+      background: tier.popular ? "transparent" : "rgba(15, 15, 25, 0.78)",
       borderRadius: "20px",
       padding: "32px 28px",
       display: "flex",
@@ -64,15 +64,15 @@ const styles = {
         ? "2px solid transparent"
         : isCurrentTier
           ? "2px solid #22c55e"
-          : "1px solid #e2e8f0",
+          : "1px solid rgba(255,255,255,0.08)",
       backgroundImage: tier.popular
-        ? `linear-gradient(#fff, #fff), ${tier.gradient}`
+        ? `linear-gradient(rgba(12, 12, 20, 0.97), rgba(12, 12, 20, 0.97)), ${tier.gradient}`
         : undefined,
       backgroundOrigin: tier.popular ? "border-box" : undefined,
       backgroundClip: tier.popular ? "padding-box, border-box" : undefined,
       boxShadow: tier.popular
-        ? "0 20px 60px rgba(139, 92, 246, 0.15)"
-        : "0 4px 24px rgba(0, 0, 0, 0.04)",
+        ? "0 20px 60px rgba(139, 92, 246, 0.2)"
+        : "0 8px 32px rgba(0, 0, 0, 0.35)",
       transition: "transform 0.25s ease, box-shadow 0.25s ease",
       overflow: "hidden",
     }) as React.CSSProperties,
@@ -129,7 +129,7 @@ const styles = {
   priceAmount: {
     fontSize: "48px",
     fontWeight: 800,
-    color: "#0f172a",
+    color: "#f1f5f9",
     letterSpacing: "-0.03em",
     lineHeight: 1,
   } as React.CSSProperties,
@@ -142,7 +142,7 @@ const styles = {
 
   tagline: {
     fontSize: "14px",
-    color: "#64748b",
+    color: "#94a3b8",
     lineHeight: 1.5,
     marginBottom: "24px",
     minHeight: "42px",
@@ -151,7 +151,7 @@ const styles = {
   divider: {
     width: "100%",
     height: "1px",
-    background: "linear-gradient(90deg, transparent, #e2e8f0, transparent)",
+    background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)",
     margin: "0 0 20px",
   } as React.CSSProperties,
 
@@ -170,7 +170,7 @@ const styles = {
     alignItems: "flex-start",
     gap: "10px",
     fontSize: "14px",
-    color: "#334155",
+    color: "#cbd5e1",
     lineHeight: 1.4,
   } as React.CSSProperties,
 
@@ -196,10 +196,10 @@ const styles = {
       fontWeight: 700,
       cursor: disabled ? "not-allowed" : "pointer",
       opacity: disabled ? 0.6 : 1,
-      color: tier.popular ? "#ffffff" : "#6366f1",
+      color: tier.popular ? "#ffffff" : "#c4b5fd",
       background: tier.popular
         ? tier.gradient
-        : "rgba(99, 102, 241, 0.08)",
+        : "rgba(139, 92, 246, 0.12)",
       transition: "all 0.2s ease",
       letterSpacing: "0.01em",
     }) as React.CSSProperties,
@@ -207,10 +207,10 @@ const styles = {
   /* ── Status Bar ── */
   statusBar: {
     marginBottom: "40px",
-    background: "linear-gradient(135deg, rgba(99, 102, 241, 0.04) 0%, rgba(217, 70, 239, 0.04) 100%)",
+    background: "linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(217, 70, 239, 0.06) 100%)",
     borderRadius: "16px",
     padding: "24px 28px",
-    border: "1px solid rgba(99, 102, 241, 0.1)",
+    border: "1px solid rgba(255,255,255,0.08)",
   } as React.CSSProperties,
 
   statusGrid: {
@@ -231,18 +231,18 @@ const styles = {
   statusValue: {
     fontSize: "20px",
     fontWeight: 700,
-    color: "#0f172a",
+    color: "#f1f5f9",
   } as React.CSSProperties,
 
   manageButton: {
     marginTop: "16px",
     padding: "10px 20px",
     borderRadius: "10px",
-    border: "1px solid #e2e8f0",
-    background: "#ffffff",
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(255,255,255,0.04)",
     fontSize: "13px",
     fontWeight: 600,
-    color: "#64748b",
+    color: "#94a3b8",
     cursor: "pointer",
     transition: "all 0.2s ease",
   } as React.CSSProperties,
@@ -250,9 +250,9 @@ const styles = {
   errorBanner: {
     padding: "12px 20px",
     borderRadius: "12px",
-    background: "rgba(239, 68, 68, 0.06)",
-    border: "1px solid rgba(239, 68, 68, 0.15)",
-    color: "#dc2626",
+    background: "rgba(244, 63, 94, 0.1)",
+    border: "1px solid rgba(244, 63, 94, 0.25)",
+    color: "#fda4af",
     fontSize: "14px",
     marginBottom: "24px",
   } as React.CSSProperties,
@@ -396,8 +396,8 @@ export function BillingPlans() {
                 e.currentTarget.style.color = "#8b5cf6";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#e2e8f0";
-                e.currentTarget.style.color = "#64748b";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+                e.currentTarget.style.color = "#94a3b8";
               }}
             >
               Manage Subscription →
@@ -458,8 +458,8 @@ export function BillingPlans() {
                         ...styles.checkIcon,
                         background: tier.popular
                           ? "linear-gradient(135deg, #8b5cf6, #d946ef)"
-                          : "rgba(99, 102, 241, 0.1)",
-                        color: tier.popular ? "#fff" : "#6366f1",
+                          : "rgba(139, 92, 246, 0.15)",
+                        color: tier.popular ? "#fff" : "#a78bfa",
                       }}
                     >
                       ✓
@@ -478,14 +478,14 @@ export function BillingPlans() {
                   if (!isCurrentTier) {
                     e.currentTarget.style.transform = "scale(1.02)";
                     if (!tier.popular) {
-                      e.currentTarget.style.background = "rgba(99, 102, 241, 0.15)";
+                      e.currentTarget.style.background = "rgba(139, 92, 246, 0.2)";
                     }
                   }
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "scale(1)";
                   if (!tier.popular) {
-                    e.currentTarget.style.background = "rgba(99, 102, 241, 0.08)";
+                    e.currentTarget.style.background = "rgba(139, 92, 246, 0.12)";
                   }
                 }}
               >

@@ -1,4 +1,5 @@
 import { getSettings } from "@/lib/settings";
+import { getStoredToken } from "./token-store";
 
 export interface MediaAsset {
   id: string;
@@ -12,7 +13,7 @@ export async function getMediaAssets(): Promise<MediaAsset[]> {
   const settings = getSettings();
   const res = await fetch(`${settings.apiBaseUrl}/media/assets`, {
     headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
   });
   if (!res.ok) {
@@ -26,7 +27,7 @@ export async function deleteMediaAsset(id: string): Promise<void> {
   const res = await fetch(`${settings.apiBaseUrl}/media/assets/${id}`, {
     method: "DELETE",
     headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
   });
   if (!res.ok) {

@@ -1,4 +1,19 @@
 import { getSettings } from "@/lib/settings";
+import { apiFetch } from "./client-base";
+import { getStoredToken } from "./token-store";
+
+async function readApiError(res: Response): Promise<string> {
+  const text = await res.text();
+  try {
+    const j = JSON.parse(text) as { detail?: unknown };
+    if (j.detail != null) {
+      return typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail);
+    }
+  } catch {
+    /* not JSON */
+  }
+  return text.slice(0, 200) || res.statusText || String(res.status);
+}
 
 export interface BrandData {
   id?: string;
@@ -22,9 +37,9 @@ export interface BrandData {
 
 export async function getBrand(): Promise<BrandData> {
   const settings = getSettings();
-  const res = await fetch(`${settings.apiBaseUrl}/brand`, {
+  const res = await apiFetch(`${settings.apiBaseUrl}/brand`, {
     headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
   });
   if (!res.ok) {
@@ -36,38 +51,40 @@ export async function getBrand(): Promise<BrandData> {
 
 export async function upsertBrand(data: BrandData): Promise<BrandData> {
   const settings = getSettings();
-  const res = await fetch(`${settings.apiBaseUrl}/brand`, {
+  const res = await apiFetch(`${settings.apiBaseUrl}/brand`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
     body: JSON.stringify(data),
   });
   if (!res.ok) {
-    throw new Error("Failed to save brand");
+    const detail = await readApiError(res);
+    throw new Error(`Could not save brand (${res.status}): ${detail}`);
   }
   return res.json();
 }
 
 export async function completeOnboarding(): Promise<void> {
   const settings = getSettings();
-  const res = await fetch(`${settings.apiBaseUrl}/onboarding/complete`, {
+  const res = await apiFetch(`${settings.apiBaseUrl}/onboarding/complete`, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
   });
   if (!res.ok) {
-    throw new Error("Failed to complete onboarding");
+    const detail = await readApiError(res);
+    throw new Error(`Could not complete onboarding (${res.status}): ${detail}`);
   }
 }
 
 export async function getOnboardingStatus(): Promise<{ is_onboarded: boolean }> {
   const settings = getSettings();
-  const res = await fetch(`${settings.apiBaseUrl}/onboarding/status`, {
+  const res = await apiFetch(`${settings.apiBaseUrl}/onboarding/status`, {
     headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
   });
   if (!res.ok) {
@@ -79,10 +96,10 @@ export async function getOnboardingStatus(): Promise<{ is_onboarded: boolean }> 
 
 export async function generateBrandKit(): Promise<{ strategy: any; brand_kit: any }> {
   const settings = getSettings();
-  const res = await fetch(`${settings.apiBaseUrl}/brand/generate-kit`, {
+  const res = await apiFetch(`${settings.apiBaseUrl}/brand/generate-kit`, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
   });
   if (!res.ok) {
@@ -94,10 +111,10 @@ export async function generateBrandKit(): Promise<{ strategy: any; brand_kit: an
 
 export async function generateLogo(): Promise<{ logo_url: string }> {
   const settings = getSettings();
-  const res = await fetch(`${settings.apiBaseUrl}/brand/logo`, {
+  const res = await apiFetch(`${settings.apiBaseUrl}/brand/logo`, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${getStoredToken() ?? ""}`,
     },
   });
   if (!res.ok) {

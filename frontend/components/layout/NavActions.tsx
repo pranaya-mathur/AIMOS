@@ -23,7 +23,7 @@ export function NavActions() {
         <button
           type="button"
           onClick={signOut}
-          className="rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          className="rounded-lg px-3 py-2 text-sm text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
         >
           Sign out
         </button>
@@ -31,7 +31,7 @@ export function NavActions() {
       {authDisabled() && (
         <Link
           href="/login"
-          className="hidden rounded-lg px-3 py-2 text-sm text-slate-600 hover:text-slate-900 sm:inline"
+          className="hidden rounded-lg px-3 py-2 text-sm text-slate-400 hover:text-slate-200 sm:inline"
         >
           Sign in
         </Link>

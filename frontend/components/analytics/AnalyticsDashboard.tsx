@@ -53,7 +53,7 @@ export function AnalyticsDashboard() {
 
   return (
     <div className="space-y-10">
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-slate-400">
         Data from <code className="text-slate-500">GET /analytics/*</code> and{" "}
         <code className="text-slate-500">GET /usage/me</code>. Spend and
         impressions appear when{" "}
@@ -138,13 +138,13 @@ export function AnalyticsDashboard() {
         </div>
 
         {usageMe && (
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 text-sm">
-            <p className="text-slate-600">
+          <div className="mt-4 rounded-2xl border border-white/[0.06] bg-white/[0.04] p-4 text-sm backdrop-blur-sm">
+            <p className="text-slate-400">
               Period: {usageMe.period_utc.start.slice(0, 10)} →{" "}
               {usageMe.period_utc.end.slice(0, 10)} (UTC)
             </p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              <p className="text-slate-700">
+              <p className="text-slate-300">
                 Campaigns:{" "}
                 <strong>{usageMe.campaigns.used}</strong>
                 {usageMe.campaigns.limit != null
@@ -154,7 +154,7 @@ export function AnalyticsDashboard() {
                   ? `· left ${usageMe.campaigns.remaining}`
                   : ""}
               </p>
-              <p className="text-slate-700">
+              <p className="text-slate-300">
                 Tokens:{" "}
                 <strong>{usageMe.tokens.used.toLocaleString()}</strong>
                 {usageMe.tokens.limit != null
@@ -169,25 +169,25 @@ export function AnalyticsDashboard() {
         )}
 
         {usageAgg && Object.keys(usageAgg.breakdown).length > 0 && (
-          <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200">
+          <div className="mt-4 overflow-x-auto rounded-2xl border border-white/[0.06]">
             <table className="w-full min-w-[480px] text-left text-sm">
-              <thead className="border-b border-slate-200 bg-white text-xs uppercase text-slate-500">
+              <thead className="border-b border-white/[0.06] bg-white/[0.04] text-xs uppercase text-slate-500">
                 <tr>
                   <th className="px-4 py-2">Provider / model</th>
                   <th className="px-4 py-2">Tokens</th>
                   <th className="px-4 py-2">Cost (USD)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-white/[0.06]">
                 {Object.entries(usageAgg.breakdown).map(([k, v]) => (
-                  <tr key={k}>
-                    <td className="px-4 py-2 font-mono text-xs text-slate-700">
+                  <tr key={k} className="hover:bg-white/[0.02]">
+                    <td className="px-4 py-2 font-mono text-xs text-slate-400">
                       {k}
                     </td>
-                    <td className="px-4 py-2 text-slate-600">
+                    <td className="px-4 py-2 text-slate-400">
                       {v.tokens.toLocaleString()}
                     </td>
-                    <td className="px-4 py-2 text-slate-600">
+                    <td className="px-4 py-2 text-slate-400">
                       {fmtUsd(v.cost)}
                     </td>
                   </tr>
@@ -198,19 +198,19 @@ export function AnalyticsDashboard() {
         )}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <h3 className="text-sm font-medium text-slate-700">
+      <section className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 backdrop-blur-sm">
+        <h3 className="text-sm font-medium text-slate-300">
           Per-campaign analytics
         </h3>
         <p className="mt-1 text-sm text-slate-500">
-          Open any campaign → <strong>Campaign analytics</strong> for spend,
+          Open any campaign → <strong className="text-slate-300">Campaign analytics</strong> for spend,
           leads, and daily rows (
-          <code className="text-slate-600">GET /analytics/campaign/{"{id}"}</code>
+          <code className="text-slate-400">GET /analytics/campaign/{"{id}"}</code>
           ).
         </p>
         <Link
           href="/campaigns"
-          className="mt-3 inline-block text-sm text-violet-600 hover:text-violet-700"
+          className="mt-3 inline-block text-sm text-violet-400 hover:text-violet-300"
         >
           Go to campaigns →
         </Link>
@@ -220,7 +220,7 @@ export function AnalyticsDashboard() {
         <button
           type="button"
           onClick={load}
-          className="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+          className="rounded-xl border border-white/[0.12] px-4 py-2 text-sm text-slate-300 hover:bg-white/[0.06]"
         >
           Refresh
         </button>

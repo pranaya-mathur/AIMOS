@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { TaskStatusPoller } from "@/components/jobs/TaskStatusPoller";
 import {
@@ -49,28 +50,36 @@ export function MediaStudio() {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-slate-600">
+      <p className="text-sm">
+        <Link
+          href="/media-assets"
+          className="font-medium text-violet-400 hover:text-violet-300"
+        >
+          Browse media asset library →
+        </Link>
+      </p>
+      <p className="text-sm text-slate-400">
         Queues Celery jobs via{" "}
         <code className="text-slate-500">POST /media/…/create</code>. Payload
         shape depends on the provider SDK — check{" "}
-        <a href={swaggerUrl()} className="text-violet-600 hover:underline">
+        <a href={swaggerUrl()} className="text-violet-400 hover:text-violet-300 hover:underline">
           Swagger
         </a>{" "}
         and backend integration code.
       </p>
 
-      <label className="block text-sm text-slate-600">
+      <label className="block text-sm text-slate-400">
         JSON input (object)
         <textarea
           value={jsonText}
           onChange={(e) => setJsonText(e.target.value)}
           rows={12}
-          className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 font-mono text-xs text-slate-800 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/15"
+          className="mt-1 w-full rounded-xl border border-white/[0.1] bg-white/[0.04] p-3 font-mono text-xs text-slate-200 focus:border-violet-500/50 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
         />
       </label>
 
       {err && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-sm text-rose-400" role="alert">
           {err}
         </p>
       )}

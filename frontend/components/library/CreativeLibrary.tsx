@@ -75,23 +75,23 @@ export function CreativeLibrary() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-2xl border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-medium text-slate-700">
+      <section className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 backdrop-blur-sm">
+        <h2 className="text-sm font-medium text-slate-300">
           Generate copy variations
         </h2>
         <p className="mt-1 text-xs text-slate-500">
-          Calls <code className="text-slate-600">POST /creatives/variations</code>{" "}
-          and polls each <code className="text-slate-600">GET /job/{"{id}"}</code>.
+          Calls <code className="text-slate-400">POST /creatives/variations</code>{" "}
+          and polls each <code className="text-slate-400">GET /job/{"{id}"}</code>.
         </p>
         <textarea
           value={brief}
           onChange={(e) => setBrief(e.target.value)}
           placeholder="Creative brief"
           rows={4}
-          className="mt-4 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-900 placeholder:text-slate-400 focus:border-violet-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500/15"
+          className="mt-4 w-full rounded-xl border border-white/[0.1] bg-white/[0.04] p-3 text-slate-100 placeholder:text-slate-500 focus:border-violet-500/50 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
         />
         <div className="mt-3 flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-sm text-slate-600">
+          <label className="flex items-center gap-2 text-sm text-slate-400">
             Count
             <input
               type="number"
@@ -99,7 +99,7 @@ export function CreativeLibrary() {
               max={10}
               value={n}
               onChange={(e) => setN(Number(e.target.value))}
-              className="w-16 rounded-lg border border-slate-200 bg-white px-2 py-1 text-slate-900 shadow-sm"
+              className="w-16 rounded-lg border border-white/[0.1] bg-white/[0.04] px-2 py-1 text-slate-100 shadow-sm"
             />
           </label>
           <button
@@ -112,7 +112,7 @@ export function CreativeLibrary() {
           </button>
         </div>
         {error && (
-          <p className="mt-3 text-sm text-red-600" role="alert">
+          <p className="mt-3 text-sm text-rose-400" role="alert">
             {error}
           </p>
         )}

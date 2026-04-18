@@ -46,7 +46,7 @@ export function TaskStatusPoller({ taskId }: Props) {
   if (!taskId) return null;
 
   return (
-    <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 font-mono text-xs text-slate-700">
+    <div className="mt-4 rounded-xl border border-white/[0.08] bg-white/[0.04] p-3 font-mono text-xs text-slate-300">
       <p>
         <span className="text-slate-500">task_id</span> {taskId}
       </p>
@@ -55,17 +55,17 @@ export function TaskStatusPoller({ taskId }: Props) {
         <span
           className={
             status === "SUCCESS"
-              ? "text-emerald-600"
+              ? "text-emerald-400"
               : status === "FAILURE"
-                ? "text-red-600"
-                : "text-amber-600"
+                ? "text-rose-400"
+                : "text-amber-400"
           }
         >
           {status ?? "…"}
         </span>
       </p>
       {result != null && (
-        <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap text-slate-600">
+        <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap text-slate-400">
           {typeof result === "string"
             ? result
             : JSON.stringify(result, null, 2)}

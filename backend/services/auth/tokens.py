@@ -7,6 +7,21 @@ import jwt
 from core.config import get_settings
 
 
+def create_password_reset_token(*, subject: str) -> str:
+    """Short-lived JWT for POST /auth/password-reset/confirm (claim typ=pwd_reset)."""
+    settings = get_settings()
+    now = datetime.now(tz.utc)
+    expire = now + timedelta(hours=1)
+    payload = {
+        "sub": subject,
+        "typ": "pwd_reset",
+        "iat": now,
+        "exp": expire,
+        "jti": str(uuid.uuid4()),
+    }
+    return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+
+
 def create_access_token(*, subject: str, email: str, role: str) -> str:
     settings = get_settings()
     now = datetime.now(tz.utc)
