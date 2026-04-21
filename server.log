@@ -243,3 +243,5 @@ INFO:     127.0.0.1:49775 - "GET /health/ready HTTP/1.1" 503 Service Unavailable
 INFO:     127.0.0.1:49776 - "GET /health/ready HTTP/1.1" 503 Service Unavailable
 INFO:     127.0.0.1:49778 - "GET /health/ready HTTP/1.1" 503 Service Unavailable
 INFO:     127.0.0.1:49779 - "GET /health/ready HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:64587 - "POST /api/auth/login?username=admin&password=admin123 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:64588 - "POST /api/auth/login?username=admin&password=password123 HTTP/1.1" 404 Not Found
