@@ -7,7 +7,7 @@ Obtain these keys from the respective providers and add them to your `.env` file
 
 | Provider | Purpose | Key Needed |
 | :--- | :--- | :--- |
-| **OpenAI** (Critical) | Powers the 12-agent pipeline (`gpt-4o-mini`). | `OPENAI_API_KEY` |
+| **OpenAI** (Critical) | Powers the 14-agent pipeline (`gpt-4o-mini`). | `OPENAI_API_KEY` |
 | **Stripe** (Optional) | Handles payments and subscriptions in Bubble. | `STRIPE_SECRET_KEY` |
 | **AdCreative.ai** | Generates high-conversion ad images. | `ADCREATIVE_API_KEY` |
 | **Pictory** | Generates AI videos for social media. | `PICTORY_API_KEY` |
@@ -37,7 +37,7 @@ PUBLIC_API_BASE_URL=https://api.yourdomain.com
 ### Step 4: The Core Workflow
 1.  **Auth**: Call `POST /auth/login` to get a JWT. Store it in a Custom State or browser cookie.
 2.  **Campaign**: Call `POST /campaign/create` with the user's brief.
-3.  **Polling**: Since the 12-agent pipeline takes time, use a "Do every X seconds" workflow in Bubble to poll `GET /job/{task_id}` until the status is `SUCCESS`.
+3.  **Polling**: Since the 14-agent pipeline takes time, use a "Do every X seconds" workflow in Bubble to poll `GET /job/{task_id}` until the status is `SUCCESS`.
 4.  **Display**: Retrieve the results from `output` once the job is finished.
 
 ## 3. Local Development Tip

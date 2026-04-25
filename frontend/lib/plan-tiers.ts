@@ -34,7 +34,7 @@ export const PLAN_TIERS: PlanTier[] = [
     features: [
       "50 AI campaigns / month",
       "5M OpenAI tokens / month",
-      "12-agent pipeline (all agents)",
+      "14-agent pipeline (all agents)",
       "Multi-platform launch (Meta, Google, X)",
       "WhatsApp lead capture",
       "Email & priority support",

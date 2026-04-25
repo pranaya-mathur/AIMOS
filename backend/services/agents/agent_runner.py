@@ -31,9 +31,21 @@ def _extract_json_block(raw_text: str):
         return None
 
 
-def run_agent(state: dict, *, name: str, output_key: str, schema: dict, prompt_template: str):
-    input_payload = state.get("input", {})
-    context = state.get("agent_outputs", {})
+from services.governance.guards import scrub_pii
+
+
+def run_agent(state: dict, *, name: str, output_key: str, schema: dict, prompt_template: str, context_filter: list[str] = None):
+    # 2.0 Governance: Scrub input for PII before it hits the LLM
+    input_payload = scrub_pii(state.get("input", {}))
+    
+    # 2.0 Context Pruning: Only pass authorized agent outputs to save tokens
+    full_history = state.get("agent_outputs", {})
+    if context_filter:
+        context = {k: v for k, v in full_history.items() if k in context_filter}
+    else:
+        context = full_history
+        
+    context = scrub_pii(context)
 
     prompt = prompt_template.format(
         input=_pretty_json_block(input_payload),
@@ -66,6 +78,9 @@ def run_agent(state: dict, *, name: str, output_key: str, schema: dict, prompt_t
 
     if parsed is None:
         parsed = {"raw_text": raw}
+
+    # 2.0 Governance: Scrub output for PII before persisting
+    parsed = scrub_pii(parsed)
 
     state.setdefault("agent_outputs", {})
     state["agent_outputs"][name] = parsed

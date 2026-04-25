@@ -10,9 +10,9 @@ export const SERVICE_MODULES: {
 }[] = [
   {
     id: "pipeline",
-    title: "12-agent pipeline",
+    title: "14-agent pipeline",
     description:
-      "Strategy → brand → content → paid → social → leads → sales → engagement → analytics → optimization → growth → dashboard.",
+      "Spy → analyzer → brand → content → benchmarker → campaign → social → leads → sales → engagement → performance → growth → dashboard → wisdom.",
     href: "/campaigns",
     methods: ["POST /campaign/create", "POST /campaign/{id}/rerun", "GET /job/{task_id}"],
   },

@@ -4,42 +4,32 @@ from langgraph.graph import StateGraph, END
 from sqlalchemy.orm import Session
 from db import SessionLocal
 from services.usage.quotas import assert_can_consume_tokens
-from services.agents import (
-    analytics_engine_agent,
-    brand_builder_agent,
-    business_analyzer_agent,
-    business_dashboard_agent,
-    campaign_builder_agent,
-    content_studio_agent,
-    customer_engagement_agent,
-    growth_planner_agent,
-    lead_capture_agent,
-    optimization_engine_agent,
-    predictive_benchmarker_agent,
-    sales_agent_agent,
-    social_media_manager_agent,
-    competitive_spy_agent,
-    wisdom_extractor_agent,
-)
+from services.agents.registry import AgentRegistry
 
-# BRD v2 order: spy → strategy → brand → content → paid → social → leads → sales → engagement → analytics → optimization → growth → dashboard
+# BRD v2 Lean: spy → analyzer → brand → content → benchmarker → campaign → social → leads → sales → engagement → performance → growth → dashboard
 AGENT_ORDER = [
-    ("competitive_spy", competitive_spy_agent.run),
-    ("business_analyzer", business_analyzer_agent.run),
-    ("brand_builder", brand_builder_agent.run),
-    ("content_studio", content_studio_agent.run),
-    ("predictive_benchmarker", predictive_benchmarker_agent.run),
-    ("campaign_builder", campaign_builder_agent.run),
-    ("social_media_manager", social_media_manager_agent.run),
-    ("lead_capture", lead_capture_agent.run),
-    ("sales_agent", sales_agent_agent.run),
-    ("customer_engagement", customer_engagement_agent.run),
-    ("analytics_engine", analytics_engine_agent.run),
-    ("optimization_engine", optimization_engine_agent.run),
-    ("growth_planner", growth_planner_agent.run),
-    ("business_dashboard", business_dashboard_agent.run),
-    ("wisdom_extractor", wisdom_extractor_agent.run),
+    ("competitive_spy", AgentRegistry.get_runner("competitive_spy")),
+    ("business_analyzer", AgentRegistry.get_runner("business_analyzer")),
+    ("brand_builder", AgentRegistry.get_runner("brand_builder")),
+    ("content_studio", AgentRegistry.get_runner("content_studio")),
+    ("predictive_benchmarker", AgentRegistry.get_runner("predictive_benchmarker")),
+    ("campaign_builder", AgentRegistry.get_runner("campaign_builder")),
+    ("social_media_manager", AgentRegistry.get_runner("social_media_manager")),
+    ("lead_capture", AgentRegistry.get_runner("lead_capture")),
+    ("sales_agent", AgentRegistry.get_runner("sales_agent")),
+    ("customer_engagement", AgentRegistry.get_runner("customer_engagement")),
+    ("performance_brain", AgentRegistry.get_runner("performance_brain")),
+    ("growth_planner", AgentRegistry.get_runner("growth_planner")),
+    ("business_dashboard", AgentRegistry.get_runner("business_dashboard")),
+    ("wisdom_extractor", AgentRegistry.get_runner("wisdom_extractor")),
 ]
+
+ORCHESTRATION_TRACKS = {
+    "full": [a[0] for a in AGENT_ORDER],
+    "strategy": ["competitive_spy", "business_analyzer", "brand_builder", "performance_brain", "growth_planner", "business_dashboard"],
+    "creative": ["brand_builder", "content_studio", "predictive_benchmarker", "campaign_builder", "business_dashboard"],
+    "launch": ["campaign_builder", "social_media_manager", "lead_capture", "sales_agent", "business_dashboard"]
+}
 
 AGENT_RUNNERS = {name: runner for name, runner in AGENT_ORDER}
 
@@ -60,6 +50,10 @@ class AgentState(TypedDict):
     competitor_intel: Optional[List[dict]]
     historical_wisdom: Optional[List[dict]]
     product_catalog: Optional[List[dict]]
+    loop_count: int
+    authorized_agents: List[str]
+    active_track: str
+
 
 
 def supervisor_router(state: AgentState):
@@ -76,14 +70,27 @@ def supervisor_router(state: AgentState):
 
     next_agent = state.get("next_step")
     
-    # 2.0 Predictive Guardrail: If benchmarker finds critical quality issues, pause immediately
+    # 2.0 Predictive Guardrail: If benchmarker finds critical quality issues, force refinement or pause
     forecast = (state.get("agent_outputs") or {}).get("predictive_benchmarker")
-    if forecast and isinstance(forecast, dict):
+    if forecast and isinstance(forecast, dict) and state.get("history", [])[-1] == "predictive_benchmarker":
         score = forecast.get("confidence_score", 100)
+        
+        # Scenario A: REJECT & LOOP BACK (The "9/10 Architecture" Power move)
+        # If score is suboptimal (< 60) and we haven't looped too much, force Business Analyzer to retry
+        if score < 60 and state.get("loop_count", 0) < config.get("max_loops", 2):
+            state["loop_count"] = state.get("loop_count", 0) + 1
+            state["refinement_context"] = (
+                f"REJECTED by Benchmarker (Score: {score}%). "
+                f"Issues: {', '.join(forecast.get('red_flags', []))}. "
+                f"Tips: {', '.join(forecast.get('improvement_tips', []))}"
+            )
+            return "business_analyzer"
+
+        # Scenario B: CRITICAL FAILURE & PAUSE
         # If score < 40, we force a manual review before proceeding to campaign_builder
-        if score < 40 and state.get("last_agent") == "predictive_benchmarker":
+        if score < 40:
             state["status_signal"] = "PAUSE"
-            state["refinement_context"] = f"CRITICAL: Low Performance Confidence ({score}%). Analyst Notes: {forecast.get('performance_outlook')}"
+            state["refinement_context"] = f"CRITICAL: Performance Confidence too low ({score}%). Analyst Notes: {forecast.get('performance_outlook')}"
             return END
 
     if next_agent and next_agent in AGENT_RUNNERS:
@@ -117,23 +124,40 @@ def supervisor_router(state: AgentState):
              return END
         return next_agent
 
-    # Default linear progression if no specific next_step is set
+    # Default Flow Logic: Track + Authorization Checks
+    track_name = state.get("active_track", "full")
+    track_agents = ORCHESTRATION_TRACKS.get(track_name, ORCHESTRATION_TRACKS["full"])
+    authorized = state.get("authorized_agents", [])
+    
     history = state.get("history", [])
     last_agent = history[-1] if history else None
     
+    # 1. Resolve starting point
     if not last_agent:
-        return AGENT_ORDER[0][0]
+        # Skip unauthorized at entry
+        for agent in track_agents:
+            if agent in authorized:
+                return agent
+        return "business_dashboard"
 
-    for idx, (name, _) in enumerate(AGENT_ORDER):
-        if name == last_agent:
-            if idx + 1 < len(AGENT_ORDER):
-                return AGENT_ORDER[idx + 1][0]
-            break
+    # 2. Find next agent in the specific track
+    try:
+        current_idx = track_agents.index(last_agent)
+        remaining = track_agents[current_idx + 1:]
+        
+        for next_candidate in remaining:
+            # Skip if not authorized by tier
+            if next_candidate in authorized:
+                return next_candidate
+            
+    except ValueError:
+        # If last_agent is not in this track, fallback to dashboard
+        pass
 
-    if last_agent == "wisdom_extractor":
+    if last_agent == "wisdom_extractor" or last_agent == "business_dashboard":
         return END
 
-    return "wisdom_extractor"
+    return "business_dashboard"
 
 
 def enforce_quota_wrapper(runner, user_id: str):
@@ -169,6 +193,7 @@ def build(user_id: Optional[str] = None):
                 return {
                     **result,
                     "iteration_count": s.get("iteration_count", 0) + 1,
+                    "loop_count": s.get("loop_count", 0),
                     "history": s.get("history", []) + [name]
                 }
             return node_func_with_metadata
@@ -209,6 +234,11 @@ def run_agents(data, user_id: Optional[str] = None):
                     }
 
             if brand:
+                from models import Brand, User
+                from core.config import TIER_AGENT_PERMISSIONS
+                subscription_tier = user_row.subscription_tier if user_row else "free"
+                authorized_agents = TIER_AGENT_PERMISSIONS.get(subscription_tier, TIER_AGENT_PERMISSIONS["free"])
+
                 # Add a 'brand_profile' key to the input so agents can use it (AIM-014 to AIM-021)
                 initial_input["brand_profile"] = {
                     "identities": {
@@ -265,6 +295,9 @@ def run_agents(data, user_id: Optional[str] = None):
         "agent_outputs": {},
         "iteration_count": 0,
         "history": [],
+        "loop_count": 0,
+        "authorized_agents": authorized_agents if 'authorized_agents' in locals() else TIER_AGENT_PERMISSIONS["free"],
+        "active_track": initial_input.get("track", "full"),
         "next_step": None,
         "refinement_context": None,
         "orchestration_config": orchestration_config,

@@ -1,14 +1,50 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment & Dependencies
 venv/
+.venv/
+env/
 .env
-docs/bubble/openapi-snapshot.json
-__pycache__/
-*.py[cod]
-.Python
+.env.*
+!.env.example
 *.egg-info/
 .eggs/
 dist/
 build/
-backend/celerybeat-schedule
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
 .pytest_cache/
-tests/results/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Databases
+*.db
+*.sqlite3
+!backend/migrations/*.py
+
+# Logs
+*.log
+backend/server.log
 locust-*.log
+
+# Project Specific
+docs/bubble/openapi-snapshot.json
+backend/celerybeat-schedule
+tests/results/
+server.log
+verification_test.db
+backend/models/

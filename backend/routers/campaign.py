@@ -52,6 +52,7 @@ class CreateCampaignBody(BaseModel):
     platform: str = Field(default="both", description="meta, google, or both")
     objective: str = Field(default="leads", description="leads, sales, or awareness")
     total_budget: float = Field(default=1000.0)
+    track: str = Field(default="full", description="full, strategy, creative, or launch")
     schedule_start: Optional[str] = None
     schedule_end: Optional[str] = None
 
@@ -125,7 +126,8 @@ def create_campaign(
         "input": body.input,
         "platform": body.platform,
         "objective": body.objective,
-        "total_budget": body.total_budget
+        "total_budget": body.total_budget,
+        "track": body.track # Pass track to orchestrator
     }
     task = run_campaign.delay(task_payload)
     row.celery_task_id = task.id
@@ -186,7 +188,7 @@ def rerun_campaign(
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_agency_user),
 ):
-    """Re-queue the 12-agent pipeline with the same stored `input` (clears prior output)."""
+    """Re-queue the 14-agent pipeline with the same stored `input` (clears prior output)."""
     row = db.query(Campaign).filter(Campaign.id == campaign_id).first()
     if not row:
         raise HTTPException(status_code=404, detail="Campaign not found")

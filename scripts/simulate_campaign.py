@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AIMOS PILOT SIMULATOR
-Runs a full 12-agent enterprise campaign pipeline with real business data.
+Runs a full 14-agent enterprise campaign pipeline with real business data.
 No public tunnel or Bubble connection required.
 """
 
@@ -21,9 +21,10 @@ BOLD = "\033[1m"
 END = "\033[0m"
 
 AGENT_LIST = [
-    "business_analyzer", "brand_builder", "content_studio", "campaign_builder",
-    "social_media_manager", "lead_capture", "sales_agent", "customer_engagement",
-    "analytics_engine", "optimization_engine", "growth_planner", "business_dashboard"
+    "competitive_spy", "business_analyzer", "brand_builder", "content_studio",
+    "predictive_benchmarker", "campaign_builder", "social_media_manager", "lead_capture",
+    "sales_agent", "customer_engagement", "performance_brain", "growth_planner",
+    "business_dashboard", "wisdom_extractor"
 ]
 
 def main():
@@ -59,7 +60,7 @@ def main():
         return
 
     # 2. Create Campaign
-    print(f"📦 {BOLD}Initializing 12-Agent Pipeline...{END}")
+    print(f"📦 {BOLD}Initializing 14-Agent Pipeline...{END}")
     payload = {
         "name": f"Pilot: {args.product}",
         "input": {
@@ -115,7 +116,7 @@ def main():
                 outputs = partial_result.get("agent_outputs", {})
                 for i, agent in enumerate(AGENT_LIST):
                     if agent in outputs and i > last_agent_idx:
-                        print(f"   [{i+1}/12] ✅ {agent.replace('_', ' ').title()} finished.")
+                        print(f"   [{i+1}/14] ✅ {agent.replace('_', ' ').title()} finished.")
                         last_agent_idx = i
             
             sys.stdout.write(f"\r   ⏳ Processing... ({int(time.time() - start_time)}s)")

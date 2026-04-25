@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
 from db import get_db
-from models import User, Campaign, CampaignMetric, UsageEvent, Lead, OptimizationDirective, CompetitorIntel, Brand
+from models import User, Campaign, CampaignMetric, UsageEvent, Lead, OptimizationDirective, CompetitorIntel, Brand, Organization
+from services.agents.registry import AgentRegistry
+from services.agents.agent_runner import run_agent
 from deps import get_agency_user
 import uuid
 from datetime import datetime
@@ -165,22 +167,23 @@ def trigger_campaign_optimization(
     )
     db.add(metric_row)
 
-    # 3. Run Optimization Engine
-    bundle = get_agent_bundle("optimization_engine")
+    # 3. Run Performance Brain (instead of the old optimization_engine)
+    runner = AgentRegistry.get_runner("performance_brain")
     state = {
         "input": campaign.input,
         "agent_outputs": {
             "current_metrics": perf
         }
     }
-    result_state = run_agent(
-        state,
-        name=bundle["agent_name"],
-        output_key=bundle["output_key"],
-        schema=bundle["schema"],
-        prompt_template=bundle["task_template"]
-    )
-    directives = result_state["agent_outputs"]["optimization_rules"]
+    result_state = runner(state)
+    
+    # Extract from 'performance_strategy' instead of 'optimization_rules'
+    perf_output = result_state["agent_outputs"].get("performance_strategy", {})
+    directives_payload = perf_output.get("optimization_rules", {})
+    
+    # Fallback to empty if not found
+    if not directives_payload:
+        directives_payload = {"pause_rules": [], "scale_rules": []}
 
     from services.governance.audit import log_audit_event
     log_audit_event(
@@ -188,7 +191,7 @@ def trigger_campaign_optimization(
         user_id=user.id,
         organization_id=user.organization_id,
         resource_id=campaign_id,
-        metadata={"count": len(directives.get("pause_rules", [])) + len(directives.get("scale_rules", []))}
+        metadata={"count": len(directives_payload.get("pause_rules", [])) + len(directives_payload.get("scale_rules", []))}
     )
 
     # 4. Create structured Directive records (AIM-060)
@@ -202,7 +205,7 @@ def trigger_campaign_optimization(
     # ... rule iteration ...
     
     # Scale Rules
-    for rule in directives.get("scale_rules", []):
+    for rule in directives_payload.get("scale_rules", []):
         d = OptimizationDirective(
             id=str(uuid.uuid4()),
             campaign_id=campaign_id,
@@ -215,7 +218,7 @@ def trigger_campaign_optimization(
         created_directives.append(d)
         
     # Pause Rules
-    for rule in directives.get("pause_rules", []):
+    for rule in directives_payload.get("pause_rules", []):
         d = OptimizationDirective(
             id=str(uuid.uuid4()),
             campaign_id=campaign_id,
@@ -229,7 +232,7 @@ def trigger_campaign_optimization(
 
     # 5. Update campaign output
     existing_output = dict(campaign.output or {})
-    existing_output["optimization_directives"] = directives
+    existing_output["performance_strategy"] = perf_output
     campaign.output = existing_output
     db.commit()
 

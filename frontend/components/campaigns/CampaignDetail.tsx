@@ -136,7 +136,7 @@ export function CampaignDetail({ campaignId }: Props) {
           Approve sends the campaign to <strong>Active</strong> (ready to
           launch). Reject marks it <strong>Rejected</strong>. Send back sets{" "}
           <strong>Draft</strong> for edits. Re-run clears output and runs the
-          12-agent pipeline again.
+          14-agent pipeline again.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           {c.status === "completed" && (
