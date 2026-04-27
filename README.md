@@ -1,7 +1,7 @@
 # AIMOS Enterprise — AI Marketing Operating System
 
 [![Enterprise-Ready](https://img.shields.io/badge/Status-Hardened_2.0_Verified-success?style=for-the-badge)](https://github.com/pranaya-mathur/AIMOS)
-[![Architecture](https://img.shields.io/badge/Architecture-12_Agent_LangGraph-blue?style=for-the-badge)](docs/PRODUCT_ARCHITECTURE.md)
+[![Architecture](https://img.shields.io/badge/Architecture-14_Agent_LangGraph-blue?style=for-the-badge)](docs/PRODUCT_ARCHITECTURE.md)
 [![License](https://img.shields.io/badge/Scale-Agency_Ready-blueviolet?style=for-the-badge)](LICENSE)
 
 **AIMOS Enterprise** is the definitive Operating System for AI Marketing Agencies. It orchestrates a high-precision, multi-agent pipeline that transforms business objectives into revenue-generating outcomes across the entire marketing funnel—from competitive analysis to autonomous optimization and AI-driven sales engagement.

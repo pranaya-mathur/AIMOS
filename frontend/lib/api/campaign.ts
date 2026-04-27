@@ -39,6 +39,7 @@ export async function listCampaigns(
 export async function createCampaign(body: {
   name?: string;
   input: Record<string, unknown>;
+  track?: string;
 }): Promise<{ task_id: string; campaign_id: string }> {
   return apiFetchJson("/campaign/create", {
     method: "POST",

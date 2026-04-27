@@ -50,5 +50,5 @@ class StabilityAIClient:
             return None
 
 def generate_logo_tool(prompt: str) -> Optional[str]:
-    client = StabilityAIClient()
-    return client.generate_logo(prompt)
+    from services.creatives.engine import CreativeEngine
+    return CreativeEngine.generate_image(prompt)

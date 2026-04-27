@@ -18,6 +18,18 @@ TIER_QUOTA_MAP: dict[str, tuple[int, int, int]] = {
     "enterprise": (-1, -1, -1),
 }
 
+# Hardened 2.0 Lean & Tiered Pivot (AIM-250)
+_FREE_AGENTS = ["competitive_spy", "business_analyzer", "brand_builder", "business_dashboard"]
+_PRO_AGENTS = _FREE_AGENTS + ["content_studio", "predictive_benchmarker", "campaign_builder", "social_media_manager"]
+_GROWTH_AGENTS = _PRO_AGENTS + ["lead_capture", "sales_agent", "customer_engagement", "performance_brain", "growth_planner"]
+
+TIER_AGENT_PERMISSIONS: dict[str, list[str]] = {
+    "free": _FREE_AGENTS,
+    "professional": _PRO_AGENTS,
+    "growth": _GROWTH_AGENTS,
+    "enterprise": _GROWTH_AGENTS + ["wisdom_extractor"]
+}
+
 
 class Settings(BaseSettings):
     """Validated environment configuration (fail fast at startup)."""
@@ -40,6 +52,7 @@ class Settings(BaseSettings):
         validation_alias="PASSWORD_RESET_TOKEN_IN_RESPONSE",
     )
     openai_api_key: Optional[str] = None
+    tavily_api_key: Optional[str] = None
     mock_media_provider: Optional[str] = None
     log_level: str = "INFO"
     auth_disabled: Optional[str] = Field(default=None, validation_alias="AUTH_DISABLED")
@@ -53,6 +66,15 @@ class Settings(BaseSettings):
     cors_origins: Optional[str] = Field(default=None, validation_alias="CORS_ORIGINS")
     public_api_base_url: Optional[str] = Field(default=None, validation_alias="PUBLIC_API_BASE_URL")
     stability_api_key: Optional[str] = Field(default=None, validation_alias="STABILITY_API_KEY")
+    
+    # Sovereign Mode (Phase 2: GGUF Creative Engine)
+    sovereign_mode: bool = Field(default=False, validation_alias="SOVEREIGN_MODE")
+    sd_model_path: str = Field(default="backend/models/sovereign/flux1-dev-q6_k.gguf", validation_alias="SD_MODEL_PATH")
+    sd_n_threads: int = Field(default=4, validation_alias="SD_N_THREADS")
+    inference_quality_floor: str = Field(default="q6_k", validation_alias="INFERENCE_QUALITY_FLOOR")
+    
+    memory_guard_enabled: bool = Field(default=True, validation_alias="MEMORY_GUARD_ENABLED")
+    memory_threshold_gb: float = Field(default=12.0, validation_alias="MEMORY_THRESHOLD_GB")
     # Per-user defaults (User.monthly_* overrides). -1 = unlimited for that dimension.
     default_monthly_campaign_quota: int = 50
     default_monthly_token_quota: int = 5_000_000

@@ -224,6 +224,20 @@ def _run_media(spec: MediaProviderSpec, payload: dict, request_id: Optional[str]
 
 
 def create_adcreative(payload: dict, request_id: Optional[str] = None) -> dict:
+    settings = get_settings()
+    if settings.sovereign_mode:
+        from services.creatives.engine import CreativeEngine
+        prompt = payload.get("main_text") or payload.get("text") or "Promotional Ad Creative"
+        asset_url = CreativeEngine.generate_image(prompt)
+        if asset_url:
+            return {
+                "provider": "sovereign",
+                "status": "ready",
+                "external_job_id": f"sov-{int(time.time())}",
+                "asset_url": asset_url,
+                "raw": {"prompt": prompt}
+            }
+
     return _run_media(_SPECS["adcreative"], payload, request_id)
 
 

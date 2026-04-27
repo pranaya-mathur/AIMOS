@@ -1,16 +1,15 @@
 {
-  "agent_name": "optimization_engine",
-  "output_key": "optimization_rules",
+  "agent_name": "performance_brain",
+  "output_key": "performance_strategy",
+  "description": "Hardened 2.0 Lean Pivot: Unified agent that merges growth analytics with performance optimization rules.",
   "schema": {
+    "measurement_philosophy": "string",
+    "kpis": ["string"],
+    "north_star_metric": "string",
     "optimization_principles": "string",
     "pause_rules": ["string"],
     "scale_rules": ["string"],
-    "creative_fatigue_signals": ["string"],
     "budget_shifts": ["string"],
-    "experiment_backlog": ["string"],
-    "test_prioritization_framework": ["string"],
-    "guardrails_and_brand_safety": ["string"],
-    "automation_vs_human_review": "string",
     "directives": [
       {
         "action": "string",
@@ -21,7 +20,7 @@
         "reasoning": "string"
       }
     ],
-    "handoff_to_growth_planner": "string",
+    "learned_anti_patterns": ["string"],
     "next_step": "string | null",
     "refinement_context": "string | null"
   }

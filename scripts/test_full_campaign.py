@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-End-to-end: create campaign → wait for Celery job → verify 12-agent pipeline output.
+End-to-end: create campaign → wait for Celery job → verify 14-agent pipeline output.
 
 Requires API + worker + Redis + DB (e.g. docker compose up).
 
@@ -27,18 +27,20 @@ from typing import Any, Dict, Optional
 import httpx
 
 AGENT_KEYS = (
+    "competitive_spy",
     "business_analyzer",
     "brand_builder",
     "content_studio",
+    "predictive_benchmarker",
     "campaign_builder",
     "social_media_manager",
     "lead_capture",
     "sales_agent",
     "customer_engagement",
-    "analytics_engine",
-    "optimization_engine",
+    "performance_brain",
     "growth_planner",
     "business_dashboard",
+    "wisdom_extractor",
 )
 
 _ALLOWED = frozenset(AGENT_KEYS)

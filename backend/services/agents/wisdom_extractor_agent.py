@@ -7,14 +7,15 @@ def run(state):
     """
     Extracts strategic insights from the completed orchestration state.
     """
-    # 2.0 Feature: Pass Decision Logs (Aborts/Overrides) to the agent
-    decision_logs = state.get("decision_logs", [])
+    history = state.get("history", [])
+    agent_outputs = state.get("agent_outputs", {})
     
-    # Enrich the input with the final history
+    # Enrich the input with the full orchestration context
     enhanced_input = {
         **state.get("input", {}),
-        "decision_logs": decision_logs,
-        "history_path": state.get("history", [])
+        "orchestration_history": history,
+        "refinement_context": state.get("refinement_context"),
+        "loop_count": state.get("loop_count", 0)
     }
     
     return run_agent(
