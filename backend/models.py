@@ -469,3 +469,22 @@ class LeadForm(Base):
     fields_json = Column(JSON, nullable=False, default=list)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class GrowthPlan(Base):
+    """Module 7: AI Growth Planner recommendations for next cycle."""
+
+    __tablename__ = "growth_plans"
+
+    id = Column(String, primary_key=True)
+    campaign_id = Column(String, ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False, index=True)
+    brand_id = Column(String, ForeignKey("brands.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    # AI generated analysis
+    what_worked = Column(JSON, nullable=True)
+    what_failed = Column(JSON, nullable=True)
+    next_cycle_budget = Column(Float, nullable=True)
+    new_opportunities = Column(JSON, nullable=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
