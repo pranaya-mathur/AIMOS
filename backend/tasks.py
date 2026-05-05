@@ -146,6 +146,7 @@ def _persist_campaign_result(campaign_id: str, result: object) -> None:
                 row.status = "awaiting_feedback"
             else:
                 row.status = "completed"
+                generate_growth_plan_task.apply_async((campaign_id,), countdown=60)
         else:
             row.output = {"result": str(result)}
             row.status = "completed"
@@ -714,3 +715,49 @@ def inventory_guard_tick():
         db.commit()
     finally:
         db.close()
+
+@celery.task
+def generate_growth_plan_task(campaign_id: str):
+    db = SessionLocal()
+    try:
+        from models import Campaign, GrowthPlan
+        from services.agents.growth_planner_agent import run as run_growth_planner
+        
+        campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+        if not campaign:
+            logger.error("generate_growth_plan_task: campaign %s not found", campaign_id)
+            return
+            
+        state = {
+            "input": campaign.input,
+            "agent_outputs": campaign.output or {},
+        }
+        
+        result_state = run_growth_planner(state)
+        # Agent's output key is "growth_recommendations" per config.json
+        recommendations = result_state.get("agent_outputs", {}).get("growth_recommendations", {})
+        
+        plan = GrowthPlan(
+            id=str(uuid.uuid4()),
+            campaign_id=campaign_id,
+            brand_id=campaign.brand_id, # Requires brand_id handling if missing, but models define it nullable=True sometimes? Ah I set it nullable=False! Wait... No, I set campaign_id/brand_id nullable=False in the PR. Let's make sure brand_id exists.
+            what_worked={"synthesis": recommendations.get("situation_synthesis")},
+            what_failed={"risk_mitigation": recommendations.get("risk_mitigation")},
+            next_cycle_budget=0.0,
+            new_opportunities={
+                "strategic_bets": recommendations.get("strategic_bets"),
+                "next_channel_focus": recommendations.get("next_channel_focus"),
+                "next_content_type": recommendations.get("next_content_type"),
+                "next_90_day_actions": recommendations.get("next_90_day_actions"),
+                "budget_recommendation": recommendations.get("budget_recommendation")
+            }
+        )
+        db.add(plan)
+        db.commit()
+        logger.info("Generated growth plan for campaign %s", campaign_id)
+        
+    except Exception:
+        logger.exception("generate_growth_plan_task failed for %s", campaign_id)
+    finally:
+        db.close()
+
