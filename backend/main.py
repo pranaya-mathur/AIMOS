@@ -34,6 +34,7 @@ from routers import (
     orchestration,
     chat,
     org_analytics,
+    growth,
 )
 
 import sentry_sdk
@@ -151,6 +152,7 @@ app.include_router(usage.router, prefix="/usage", tags=["usage"])
 app.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 app.include_router(org_analytics.router, prefix="/api/org-analytics", tags=["org_analytics"])
+app.include_router(growth.router, prefix="/growth", tags=["growth"])
 app.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
 
 
