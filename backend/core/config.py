@@ -56,6 +56,7 @@ class Settings(BaseSettings):
     mock_media_provider: Optional[str] = None
     log_level: str = "INFO"
     auth_disabled: Optional[str] = Field(default=None, validation_alias="AUTH_DISABLED")
+    mock_llm_enabled: bool = Field(default=False, validation_alias="MOCK_LLM_ENABLED")
     stripe_secret_key: Optional[str] = None
     stripe_webhook_secret: Optional[str] = None
     stripe_default_price_id: Optional[str] = Field(default=None, validation_alias="STRIPE_DEFAULT_PRICE_ID")
