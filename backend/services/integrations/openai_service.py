@@ -12,8 +12,11 @@ logger = logging.getLogger(__name__)
 
 
 def _get_client():
-    api_key = get_settings().openai_api_key
+    settings = get_settings()
+    api_key = settings.openai_api_key
     if not api_key:
+        if settings.mock_llm_enabled:
+            return None # Signal to use mock
         raise RuntimeError("OPENAI_API_KEY is missing. Add it to your environment before calling AI agents.")
     return OpenAI(api_key=api_key)
 
@@ -31,6 +34,9 @@ def generate_text(prompt: str) -> str:
             db.close()
 
     client = _get_client()
+    if client is None:
+        return "MOCK TEXT GENERATION: OpenAI API bypassed due to MOCK_LLM_ENABLED=1"
+
     resp = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": prompt}],
@@ -85,6 +91,25 @@ def generate_json(prompt: str) -> dict:
             db.close()
 
     client = _get_client()
+    if client is None:
+        logger.info("Using mock JSON generation for prompt.")
+        # Try to parse the required schema from the prompt
+        import json
+        schema_hint_start = prompt.find("Required JSON schema shape:\n")
+        if schema_hint_start != -1:
+            schema_hint = prompt[schema_hint_start + 28:]
+            # find end of schema (assuming it's before "Task:")
+            schema_end = schema_hint.find("\n\nTask:\n")
+            if schema_end != -1:
+                schema_str = schema_hint[:schema_end]
+                try:
+                    schema_def = json.loads(schema_str)
+                    mock_result = _generate_mock_from_schema(schema_def)
+                    return mock_result
+                except json.JSONDecodeError:
+                    pass
+        return {"mock_status": "enabled", "raw_text": "Mock JSON bypass active."}
+
     resp = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": prompt}],
@@ -122,3 +147,33 @@ def generate_json(prompt: str) -> dict:
     except Exception:
         logger.error("failed to parse JSON response from OpenAI: %s", raw)
         return {"raw_text": raw}
+
+
+def _generate_mock_from_schema(schema: dict) -> dict:
+    """Recursively generates mock data conforming to a JSON schema dictionary."""
+    result = {}
+    for key, val_type in schema.items():
+        if isinstance(val_type, dict):
+            result[key] = _generate_mock_from_schema(val_type)
+        elif isinstance(val_type, list):
+            if len(val_type) > 0 and isinstance(val_type[0], str):
+                result[key] = [f"Mock {key} 1", f"Mock {key} 2"]
+            elif len(val_type) > 0 and isinstance(val_type[0], dict):
+                result[key] = [_generate_mock_from_schema(val_type[0])]
+            else:
+                result[key] = []
+        elif val_type == "string":
+            if "url" in key.lower():
+                result[key] = "https://example.com/mock"
+            else:
+                result[key] = f"Mock generated {key}"
+        elif val_type == "integer" or val_type == "number":
+            if "score" in key.lower() or "confidence" in key.lower():
+                result[key] = 85
+            else:
+                result[key] = 42
+        elif val_type == "boolean":
+            result[key] = True
+        else:
+            result[key] = str(val_type) # Fallback for literals
+    return result
