@@ -1,27 +1,23 @@
 {
   "agent_name": "performance_brain",
   "output_key": "performance_strategy",
-  "description": "Hardened 2.0 Lean Pivot: Unified agent that merges growth analytics with performance optimization rules.",
+  "description": "Tactical KPI Doctor: Analyzes live campaign data and immediately generates tactical directives.",
   "schema": {
-    "measurement_philosophy": "string",
-    "kpis": ["string"],
-    "north_star_metric": "string",
-    "optimization_principles": "string",
-    "pause_rules": ["string"],
-    "scale_rules": ["string"],
-    "budget_shifts": ["string"],
+    "analysis_summary": "string",
+    "north_star_kpi": "string",
     "directives": [
       {
         "action": "string",
-        "description": "string",
+        "target": "string",
+        "suggestion": "string | null",
+        "reason": "string",
         "risk_score": "number",
         "confidence": "number",
-        "amount_value": "number",
-        "reasoning": "string"
+        "next_step": "string | null",
+        "refinement_context": "string | null"
       }
     ],
-    "learned_anti_patterns": ["string"],
-    "next_step": "string | null",
-    "refinement_context": "string | null"
+    "overall_risk": "number",
+    "next_step": "string | null"
   }
 }

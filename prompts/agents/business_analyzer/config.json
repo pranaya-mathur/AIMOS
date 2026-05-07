@@ -3,21 +3,22 @@
   "output_key": "business_analysis",
   "schema": {
     "executive_summary": "string",
-    "industry_summary": "string",
-    "market_and_category_trends": ["string"],
-    "competitor_notes": ["string"],
-    "competitive_gaps": ["string"],
-    "differentiation_hypotheses": ["string"],
-    "audience_hypotheses": ["string"],
-    "icp_primary": "string",
-    "icp_secondary": "string",
-    "buyer_journey_notes": ["string"],
-    "recommended_platforms": ["string"],
-    "channel_rationale": ["string"],
-    "suggested_monthly_budget": "string",
-    "budget_rationale": "string",
-    "risks_and_assumptions": ["string"],
-    "open_questions_for_client": ["string"],
-    "handoff_to_brand_builder": ["string"]
+    "audience_refinement": {
+      "primary_icp": "string",
+      "exclude": [
+        "string"
+      ],
+      "add_interests": [
+        "string"
+      ],
+      "lookalike": "string"
+    },
+    "keyword_interest_suggestions": [
+      "string"
+    ],
+    "offer_recommendation": "string",
+    "risk_score": "number",
+    "confidence": "number",
+    "handoff_to": "string"
   }
 }
