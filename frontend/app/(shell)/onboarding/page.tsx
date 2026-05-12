@@ -18,6 +18,7 @@ import {
   Users
 } from "lucide-react";
 import { upsertBrand, completeOnboarding, type BrandData } from "@/lib/api/brand";
+import { getSettings } from "@/lib/settings";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { NeuralStepper } from "@/components/onboarding/NeuralStepper";
 import { cn } from "@/lib/utils";
@@ -52,7 +53,8 @@ export default function OnboardingPage() {
       try {
         await upsertBrand(formData as BrandData);
         // Trigger background synthesis
-        fetch("/api/brand/generate-kit", { method: "POST" }).catch(console.error);
+        const settings = getSettings();
+        fetch(`${settings.apiBaseUrl}/brand/generate-kit`, { method: "POST" }).catch(console.error);
         await completeOnboarding();
         router.push("/");
       } catch (e) {

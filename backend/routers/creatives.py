@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from deps import get_agency_user
@@ -18,6 +18,12 @@ class VariationsBody(BaseModel):
     campaign_id: Optional[str] = None
 
 
+class BannerBody(BaseModel):
+    product_name: str = Field(..., min_length=1)
+    features: str = Field(..., min_length=1)
+    style: Optional[str] = "luxury"
+
+
 @router.post("/variations")
 def creative_variations(
     body: VariationsBody,
@@ -29,6 +35,39 @@ def creative_variations(
     for i in range(body.n):
         task_ids.append(generate_variation.delay(body.brief, i, user_id=uid, campaign_id=body.campaign_id).id)
     return {"task_ids": task_ids, "count": body.n}
+
+
+@router.post("/banner")
+def creative_banner(
+    body: BannerBody,
+    user: Optional[User] = Depends(get_agency_user),
+):
+    """Generates a high-fidelity ad banner (1280x720) using local Sovereign/ComfyUI."""
+    from services.creatives.engine import CreativeEngine
+    
+    banner_data_uri = CreativeEngine.generate_banner(
+        product_name=body.product_name,
+        features=body.features,
+        style_preference=body.style,
+    )
+    
+    if not banner_data_uri:
+        raise HTTPException(status_code=500, detail="Banner generation failed")
+        
+    return {"banner_url": banner_data_uri}
+
+
+@router.get("/banner")
+def banner_help():
+    """Helper for developers hitting the endpoint via GET."""
+    return {
+        "message": "This endpoint requires a POST request with product_name and features.",
+        "example_payload": {
+            "product_name": "Product Name",
+            "features": "Key highlights",
+            "style": "luxury|minimal|nature|cinematic|modern"
+        }
+    }
 
 
 class CreativeUpdateBody(BaseModel):

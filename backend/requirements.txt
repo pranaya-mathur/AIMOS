@@ -23,6 +23,7 @@ slowapi
 sentry-sdk
 sentry-sdk[fastapi]
 # stable-diffusion-cpp-python>=0.4.6
+websocket-client
 
 pytest
 pytest-asyncio

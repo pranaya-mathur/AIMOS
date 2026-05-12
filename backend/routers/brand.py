@@ -2,7 +2,7 @@ import uuid
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import AliasChoices, BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
 from db import get_db
@@ -14,6 +14,9 @@ router = APIRouter()
 
 class BrandUpsertBody(BaseModel):
     name: str
+    # Legacy / frontend-sent fields
+    category: Optional[str] = None
+    description: Optional[str] = None
     # Seller Profile (AIM-001-005)
     business_type: Optional[str] = None
     industry: Optional[str] = None
@@ -22,7 +25,16 @@ class BrandUpsertBody(BaseModel):
         validation_alias=AliasChoices("primary_goal", "marketing_goal"),
     )
     monthly_budget: Optional[float] = None
-    platform_preference: list = Field(default_factory=list)
+    platform_preference: Optional[list] = Field(default_factory=list)
+
+    @field_validator("platform_preference", mode="before")
+    @classmethod
+    def ensure_list(cls, v):
+        if isinstance(v, str):
+            return [p.strip() for p in v.split(",") if p.strip()]
+        if v is None:
+            return []
+        return v
     
     # Context & Strategy
     logo_url: Optional[str] = None
@@ -35,7 +47,22 @@ class BrandUpsertBody(BaseModel):
     analysis_report: Optional[dict] = None
 
 
-@router.get("")
+class BrandResponse(BrandUpsertBody):
+    id: str
+    user_id: str
+    organization_id: Optional[str] = None
+    
+    @field_validator("platform_preference", mode="before")
+    @classmethod
+    def ensure_list_from_db(cls, v):
+        if isinstance(v, str):
+            return [p.strip() for p in v.split(",") if p.strip()]
+        if v is None:
+            return []
+        return v
+
+
+@router.get("", response_model=BrandResponse)
 def get_brand(
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_agency_user),
@@ -55,7 +82,7 @@ def get_brand(
     return brand
 
 
-@router.post("")
+@router.post("", response_model=BrandResponse)
 def upsert_brand(
     body: BrandUpsertBody,
     db: Session = Depends(get_db),
@@ -100,9 +127,9 @@ def upsert_brand(
     brand.pricing_range = body.pricing_range
     brand.ai_generated_kit = body.ai_generated_kit
     brand.analysis_report = body.analysis_report
-    # Preserve legacy fields if needed
-    if hasattr(brand, 'category'): brand.category = body.business_type
-    if hasattr(brand, 'description'): brand.description = body.industry
+    # Preserve legacy fields
+    if hasattr(brand, 'category'): brand.category = body.category or body.business_type
+    if hasattr(brand, 'description'): brand.description = body.description
 
     db.commit()
     db.refresh(brand)
@@ -155,13 +182,11 @@ def generate_brand_kit(
     analyzer_result = run_single_agent("business_analyzer", brand_context)
     
     # Brand Builder (Identity) - consumes analyzer output via context
-    agent_outputs = {"business_analyzer": analyzer_result}
-    brand_builder_state = {"input": brand_context, "agent_outputs": agent_outputs}
+    brand_builder_result = run_single_agent("brand_builder", {**brand_context, "business_analyzer": analyzer_result})
     
-    from services.agents.brand_builder_agent import run as run_brand_builder
-    final_state = run_brand_builder(brand_builder_state)
-    
-    kit = final_state["brand_kit"]
+    kit = brand_builder_result if isinstance(brand_builder_result, dict) else {}
+    if not kit:
+        kit = {"brand_narrative": "Mock brand narrative generated.", "mock": True}
     
     # 3. Persist the generated kit back to the brand record (AIM-026 to AIM-032 Integration)
     brand.ai_generated_kit = kit
@@ -193,7 +218,8 @@ def generate_brand_logo(
     if not brand:
         raise HTTPException(status_code=404, detail="Brand profile not found.")
 
-    prompt = f"Logo for {brand.name}: {brand.category}. {brand.description}"
+    # Optimized logo prompt: prioritize name and category for cleaner visual identity
+    prompt = f"Professional minimalist logo for '{brand.name}'. Industry: {brand.category}. Concept: {brand.description[:100]}..."
     logo_data_uri = generate_logo_tool(prompt)
     if not logo_data_uri:
          raise HTTPException(status_code=500, detail="Logo generation failed")

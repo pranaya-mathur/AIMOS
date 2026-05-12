@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { getApiBaseUrl } from "@/lib/api/client";
 
 type Message = {
     role: "user" | "assistant";
@@ -36,7 +37,7 @@ export function ChatbotWidget({ slug }: Props) {
         setLoading(true);
 
         try {
-            const res = await fetch("/api/chat/message", {
+            const res = await fetch(`${getApiBaseUrl()}/api/chat/message`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

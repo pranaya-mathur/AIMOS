@@ -14,6 +14,8 @@ import {
   type OptimizationDirective,
 } from "@/lib/api/analytics";
 import { MetricCard } from "@/components/dashboard/MetricCard";
+import { getSettings } from "@/lib/settings";
+import { getStoredToken } from "@/lib/api/token-store";
 
 type Props = { campaignId: string };
 
@@ -45,8 +47,12 @@ export function CampaignAnalyticsDetail({ campaignId }: Props) {
         .catch(console.error);
       
       // Phase 2: Competitor Intel
-      void fetch(`/api/analytics/competitors/${campaignId}`)
-        .then(res => res.json())
+      const { apiBaseUrl } = getSettings();
+      const token = getStoredToken() ?? "";
+      void fetch(`${apiBaseUrl}/analytics/competitors/${campaignId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(res => res.ok ? res.json() : [])
         .then(setCompetitors)
         .catch(console.error);
     });
@@ -268,7 +274,7 @@ export function CampaignAnalyticsDetail({ campaignId }: Props) {
                                  <button 
                                     onClick={() => {
                                         window.confirm("Abort this autonomous action?") && 
-                                        fetch(`/api/analytics/directives/${d.id}`, { method: 'DELETE' }).then(() => load());
+                                        fetch(`${getSettings().apiBaseUrl}/analytics/directives/${d.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${getStoredToken() ?? ""}` } }).then(() => load());
                                     }}
                                     className="rounded-lg bg-rose-500/15 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-rose-300 transition-colors hover:bg-rose-500/25"
                                  >

@@ -46,3 +46,16 @@ export async function approveCreative(id: string): Promise<void> {
     method: "POST"
   });
 }
+
+export async function generateBanner(body: {
+  product_name: string;
+  features: string;
+  style?: string;
+  scene_override?: string;
+}): Promise<{ banner_url: string }> {
+  return apiFetchJson("/creatives/banner", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}

@@ -14,25 +14,9 @@ class SovereignMediaClient:
     def __init__(self):
         self.settings = get_settings()
         self.model_path = self.settings.sd_model_path
-        # Component paths for Flux Ensemble
+        # Juggernaut XL / SDXL usually don't require separate T5/CLIP files in SD.cpp if bundled
         self.clip_l_path = os.path.join(os.path.dirname(self.model_path), "clip_l.safetensors")
-        
-        # Priority-based T5 Discovery (Safest to Heaviest)
-        q_t5_options = [
-            os.path.join(os.path.dirname(self.model_path), "t5xxl-Q2_K.gguf"),
-            os.path.join(os.path.dirname(self.model_path), "t5xxl-Q4_K_M.gguf"),
-            os.path.join(os.path.dirname(self.model_path), "t5-v1_1-xxl-encoder-Q4_K_M.gguf")
-        ]
-        
-        self.t5xxl_path = None
-        for path in q_t5_options:
-            if os.path.exists(path) and os.path.getsize(path) > 1024:
-                self.t5xxl_path = path
-                break
-        
-        if not self.t5xxl_path:
-            self.t5xxl_path = os.path.join(os.path.dirname(self.model_path), "t5xxl_fp16.safetensors")
-            
+        self.t5xxl_path = os.path.join(os.path.dirname(self.model_path), "t5xxl.gguf")
         self.vae_path = os.path.join(os.path.dirname(self.model_path), "ae.safetensors")
         self._sd = None
         
@@ -77,23 +61,11 @@ class SovereignMediaClient:
             return True
 
     def _validate_ensemble(self):
-        """Verify model files exist and are not empty/corrupt."""
-        required_files = [
-            ("Main Model", self.model_path),
-            ("Clip-L", self.clip_l_path),
-            ("T5-XXL", self.t5xxl_path)
-        ]
-        
-        for name, path in required_files:
-            if not os.path.exists(path):
-                raise FileNotFoundError(f"Sovereign {name} missing at {path}")
-            if os.path.getsize(path) < 2048: # Catch "Entry not found" or empty files
-                # Check for "Entry not found" string specifically
-                with open(path, 'rb') as f:
-                    chunk = f.read(100)
-                    if b"Entry not found" in chunk:
-                        raise ValueError(f"Sovereign {name} at {path} is a 'Not Found' placeholder. Please download the real model.")
-                raise ValueError(f"Sovereign {name} at {path} is suspiciously small ({os.path.getsize(path)} bytes).")
+        """Verify main model exists. Secondary components are optional for SDXL/Juggernaut."""
+        if not os.path.exists(self.model_path):
+            raise FileNotFoundError(f"Sovereign Model missing at {self.model_path}")
+        if os.path.getsize(self.model_path) < 2048:
+            raise ValueError(f"Sovereign Model at {self.model_path} is invalid/empty.")
                 
         # VAE is optional in some SD.cpp versions but we check it since it's referenced
         if os.path.exists(self.vae_path) and os.path.getsize(self.vae_path) == 0:
@@ -112,14 +84,11 @@ class SovereignMediaClient:
                 
             logger.info(f"SovereignClient: Initializing StableDiffusion with model: {self.model_path}")
             
-            # Using the modern Flux-aware constructor for v0.4.6+
             self._sd = StableDiffusion(
-                diffusion_model_path=self.model_path,
+                model_path=self.model_path,
                 clip_l_path=self.clip_l_path if os.path.exists(self.clip_l_path) else None,
                 t5xxl_path=self.t5xxl_path if os.path.exists(self.t5xxl_path) else None,
-                # vae_path=self.vae_path if os.path.exists(self.vae_path) else None,
                 n_threads=self.settings.sd_n_threads,
-                wtype="default"
             )
             logger.info("SovereignClient: Successfully initialized via Metal/MPS.")
         except ImportError:
@@ -152,17 +121,18 @@ class SovereignMediaClient:
         start_time = time.time()
         logger.info(f"SovereignClient: Starting inference for prompt: {prompt}")
         
-        # Detect if we are using Flux Schnell for step optimization
-        is_schnell = "schnell" in os.path.basename(self.model_path).lower()
-        steps = 4 if is_schnell else 20
-        cfg = 1.0 if is_schnell else 3.5
+        # Detect if we are using Juggernaut / Lightning for step optimization
+        model_name = os.path.basename(self.model_path).lower()
+        is_lightning = "lightning" in model_name or "schnell" in model_name
+        steps = 4 if is_lightning else 20
+        cfg = 1.0 if is_lightning else 7.0
         
         # stable-diffusion-cpp-python v0.4.6 API: generate_image
         images = self._sd.generate_image(
             prompt=prompt,
             width=width,
             height=height,
-            sample_method="euler_a" if not is_schnell else "latent_consistency",
+            sample_method="euler_a" if not is_lightning else "latent_consistency",
             steps=steps, 
             cfg_scale=cfg,
             seed=-1

@@ -39,10 +39,24 @@ export default function BrandSetupPage() {
   const save = async () => {
     setSaving(true);
     try {
-      await upsertBrand(formData);
-      router.push("/");
+      // Strip null/undefined so Pydantic validators don't reject the payload
+      const payload = Object.fromEntries(
+        Object.entries(formData).filter(([, v]) => v !== null && v !== undefined)
+      ) as BrandData;
+      // Replace empty string website_url with undefined (Pydantic AnyUrl rejects "")
+      if (payload.website_url === "") delete (payload as any).website_url;
+      
+      // Ensure platform_preference is a list (fixes 422 error if it loaded as a string from DB)
+      if (typeof payload.platform_preference === "string") {
+        payload.platform_preference = (payload.platform_preference as string)
+          .split(",")
+          .map((p) => p.trim())
+          .filter(Boolean);
+      }
+      
+      await upsertBrand(payload);
     } catch (e) {
-      alert("Failed to save brand details.");
+      alert(e instanceof Error ? e.message : "Failed to save brand details.");
     } finally {
       setSaving(false);
     }
@@ -221,7 +235,7 @@ export default function BrandSetupPage() {
                         <label className="text-mono-premium block">Business Identifier</label>
                         <input
                             type="text"
-                            value={formData.name}
+                            value={formData.name || ""}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 text-white outline-none focus:ring-2 focus:ring-primary/50"
                             placeholder="e.g. SOLARA LUXURY"
@@ -231,7 +245,7 @@ export default function BrandSetupPage() {
                         <label className="text-mono-premium block">Industry Vertical</label>
                         <input
                             type="text"
-                            value={formData.category}
+                            value={formData.category || ""}
                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                             className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 text-white outline-none focus:ring-2 focus:ring-primary/50"
                             placeholder="e.g. Sustainable Fashion"
@@ -240,7 +254,7 @@ export default function BrandSetupPage() {
                     <div className="md:col-span-2 space-y-4">
                         <label className="text-mono-premium block">Brand Narrative / Mission</label>
                         <textarea
-                            value={formData.description}
+                            value={formData.description || ""}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             rows={4}
                             className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 text-white outline-none focus:ring-2 focus:ring-primary/50 leading-relaxed"
@@ -297,7 +311,7 @@ export default function BrandSetupPage() {
                         <label className="text-mono-premium block">Nexus URL (Website)</label>
                         <input
                             type="url"
-                            value={formData.website_url}
+                            value={formData.website_url || ""}
                             onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
                             className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 text-white outline-none focus:ring-2 focus:ring-primary/50"
                             placeholder="https://aimos.io"

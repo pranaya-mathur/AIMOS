@@ -56,6 +56,8 @@ class Settings(BaseSettings):
     mock_media_provider: Optional[str] = None
     log_level: str = "INFO"
     auth_disabled: Optional[str] = Field(default=None, validation_alias="AUTH_DISABLED")
+    # Feature-dev: enables agents to run on mock data without an OpenAI key
+    mock_llm_enabled: bool = Field(default=True, validation_alias="MOCK_LLM_ENABLED")
     stripe_secret_key: Optional[str] = None
     stripe_webhook_secret: Optional[str] = None
     stripe_default_price_id: Optional[str] = Field(default=None, validation_alias="STRIPE_DEFAULT_PRICE_ID")
@@ -67,10 +69,11 @@ class Settings(BaseSettings):
     public_api_base_url: Optional[str] = Field(default=None, validation_alias="PUBLIC_API_BASE_URL")
     stability_api_key: Optional[str] = Field(default=None, validation_alias="STABILITY_API_KEY")
     
-    # Sovereign Mode (Phase 2: GGUF Creative Engine)
-    sovereign_mode: bool = Field(default=False, validation_alias="SOVEREIGN_MODE")
-    sd_model_path: str = Field(default="backend/models/sovereign/flux1-dev-q6_k.gguf", validation_alias="SD_MODEL_PATH")
-    sd_n_threads: int = Field(default=4, validation_alias="SD_N_THREADS")
+    # Sovereign Mode (Phase 2: ComfyUI Juggernaut XL Creative Engine)
+    sovereign_mode: bool = Field(default=True, validation_alias="SOVEREIGN_MODE")
+    comfyui_url: str = Field(default="127.0.0.1:8188", validation_alias="COMFYUI_URL")
+    sd_model_path: str = Field(default="backend/models/sovereign/juggernautXL_v9.gguf", validation_alias="SD_MODEL_PATH")
+    sd_n_threads: int = Field(default=8, validation_alias="SD_N_THREADS")
     inference_quality_floor: str = Field(default="q6_k", validation_alias="INFERENCE_QUALITY_FLOOR")
     
     memory_guard_enabled: bool = Field(default=True, validation_alias="MEMORY_GUARD_ENABLED")
